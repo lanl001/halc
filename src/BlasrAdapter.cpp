@@ -127,7 +127,7 @@ bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 	string tempstr;
 	blasrfile >> longreadname;
 	newblasrfile << longreadname;
-	if (lrhm[longreadname].length == 0)
+	if (lrhm.find(longreadname) == lrhm.end())
 	{
 		unsigned long p;
 		if ((p = longreadname.rfind('/')) != string::npos)
@@ -332,7 +332,7 @@ bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 			if(!blasrfile)
 				break;
 			newblasrfile << longreadname;
-			if (lrhm[longreadname].length == 0)
+			if (lrhm.find(longreadname) == lrhm.end())
 			{
 				unsigned long p;
 				if ((p = longreadname.rfind('/')) != string::npos)

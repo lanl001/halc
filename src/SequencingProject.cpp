@@ -16,8 +16,9 @@
 #include "parsingargs.h"
 #include "SequencingProject.h"
 #include "BlasrAdapter.h"
+#include <omp.h>
 
-#define DISPLAY_NUM 200
+#define DISPLAY_NUM 10000
 #define BASE_PER_LINE 70
 
 using namespace __gnu_cxx;
@@ -28,9 +29,13 @@ string logfilename;
 bool preprocess;
 int preprocess_threshold;
 unsigned short max_support;
+bool fixed_max_support;
 int bestn;
 vector<Ccutpoint> cutpoints;
 vector<CSubcontig> subcontigs;
+int numofthread;
+Clongread::Clongread():corrected(false),length(0)
+{}
 namespace __gnu_cxx
 {
 size_t str_hash::operator()(const string& str) const
@@ -252,7 +257,7 @@ void ReadAlign(ifstream& alignfile)
 	bool tailflag = false;
 	Ccutpoint cp1, cp2;
 	alignfile >> longreadname;
-	if (lrhm[longreadname].length == 0)
+	if (lrhm.find(longreadname) == lrhm.end())
 	{
 		unsigned long p;
 		if ((p = longreadname.rfind('/')) != string::npos)
@@ -352,7 +357,7 @@ void ReadAlign(ifstream& alignfile)
 			alignfile >> longreadname;
 			if (!alignfile)
 				break;
-			if (lrhm[longreadname].length == 0)
+			if (lrhm.find(longreadname) == lrhm.end())
 			{
 				unsigned long p;
 				if ((p = longreadname.rfind('/')) != string::npos)
@@ -906,6 +911,7 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 			}
 		}
 	}
+	return true;
 }
 
 bool CSubUndigraph::getSubcontiglist()
@@ -1014,13 +1020,23 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	if (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '+')
 	{ //A->B||B->A
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
-			CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = max_support;
+		{
+			CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
+//			cout<<CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)]<<endl;
+		}
 		else
 		{
 			if (++CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
-				cout << "warning:reached max_support" << endl;
-				--CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+				if (fixed_max_support)
+				{
+					cout << "warning:reached max_support" << endl;
+					--CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+				}
+				else
+				{
+					max_support++;
+				}
 			}
 			if (CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
@@ -1035,13 +1051,20 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	else if (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '-')
 	{ //-A->-B||-B->-A
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
-			CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = max_support;
+			CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
 			if (++CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
-				cout << "warning:reached max_support" << endl;
-				--CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+				if (fixed_max_support)
+				{
+					cout << "warning:reached max_support" << endl;
+					--CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+				}
+				else
+				{
+					max_support++;
+				}
 			}
 			if (CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
@@ -1057,13 +1080,20 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	else if ((contig1.subcontig.indexofsubcontigs <= contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '-'))
 	{ //A->-B
 		if (contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex)
-			CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = max_support;
+			CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
 			if (++CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
-				cout << "warning:reached max_support" << endl;
-				--CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+				if (fixed_max_support)
+				{
+					cout << "warning:reached max_support" << endl;
+					--CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+				}
+				else
+				{
+					max_support++;
+				}
 			}
 			if (CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
@@ -1079,13 +1109,20 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '-'))
 	{ //B->-A
 		if (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex)
-			CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = max_support;
+			CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
 			if (++CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
-				cout << "warning:reached max_support" << endl;
-				--CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+				if (fixed_max_support)
+				{
+					cout << "warning:reached max_support" << endl;
+					--CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+				}
+				else
+				{
+					max_support++;
+				}
 			}
 			if (CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
@@ -1101,13 +1138,20 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	else if ((contig1.subcontig.indexofsubcontigs <= contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
 	{ //-A->B
 		if (contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex)
-			CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = max_support;
+			CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
 			if (++CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
-				cout << "warning:reached max_support" << endl;
-				--CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+				if (fixed_max_support)
+				{
+					cout << "warning:reached max_support" << endl;
+					--CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+				}
+				else
+				{
+					max_support++;
+				}
 			}
 			if (CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
@@ -1123,13 +1167,20 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
 	{ //-B->A
 		if (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex)
-			CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = max_support;
+			CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
 			if (++CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
-				cout << "warning:reached max_support" << endl;
-				--CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+				if (fixed_max_support)
+				{
+					cout << "warning:reached max_support" << endl;
+					--CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+				}
+				else
+				{
+					max_support++;
+				}
 			}
 			if (CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
@@ -1171,7 +1222,7 @@ void CUndigraph::MakeUndigraph(ifstream& alignfile)
 	int tailoffset;
 	CSubUndigraph subundigraph;
 	alignfile >> subundigraph.longreadname;
-	if (lrhm[subundigraph.longreadname].length == 0)
+	if (lrhm.find(subundigraph.longreadname) == lrhm.end())
 	{
 		unsigned long p;
 		if ((p = subundigraph.longreadname.rfind('/')) != string::npos)
@@ -1303,7 +1354,7 @@ void CUndigraph::MakeUndigraph(ifstream& alignfile)
 			alignfile >> longreadnametemp;
 			if (!alignfile)
 				break;
-			if (lrhm[longreadnametemp].length == 0)
+			if (lrhm.find(longreadnametemp) == lrhm.end())
 			{
 				unsigned long p;
 				if ((p = longreadnametemp.rfind('/')) != string::npos)
@@ -1347,13 +1398,13 @@ CMyVectorInt::CMyVectorInt() :
 {
 }
 
-bool Ccorrector::fpathbysupport(int index)
+bool Ccorrector::fpathbysupport(int index, int *&dist)
 {
-	if (dist != NULL)
-	{
-		delete[] dist;
-		dist = NULL;
-	}
+	/*	if (dist != NULL)
+	 {
+	 delete[] dist;
+	 dist = NULL;
+	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	dist = new int[subcontiglistsize];
 	dist[0] = 0;
@@ -1419,9 +1470,23 @@ bool Ccorrector::fpathbysupport(int index)
 			if (c)
 			{
 				if (ispositive)
-					distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+				{
+					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)])
+					{
+						distji = 0;
+					}
+					else
+						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+				}
 				else
-					distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+				{
+					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)])
+					{
+						distji = 0;
+					}
+					else
+						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+				}
 				if ((dist[j] + distji) < k)
 				{
 					k = dist[j] + distji;
@@ -1432,13 +1497,13 @@ bool Ccorrector::fpathbysupport(int index)
 	}
 	return true;
 }
-bool Ccorrector::fpathbysimilarity(int index)
+bool Ccorrector::fpathbysimilarity(int index, int *&dist)
 {
-	if (dist)
-	{
-		delete[] dist;
-		dist = NULL;
-	}
+	/*	if (dist)
+	 {
+	 delete[] dist;
+	 dist = NULL;
+	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	dist = new int[subcontiglistsize];
 	dist[0] = 0;
@@ -1513,7 +1578,7 @@ bool Ccorrector::fpathbysimilarity(int index)
 	}
 	return true;
 }
-bool Ccorrector::nfpathbysimilarity(int index, int n)
+bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> &pdist)
 {
 	pdist.clear();
 	vector<int>::iterator it;
@@ -1596,13 +1661,13 @@ bool Ccorrector::nfpathbysimilarity(int index, int n)
 	}
 	return true;
 }
-int Ccorrector::froutebysupport(int index)
+int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 {
-	if (path != NULL)
-	{
-		delete[] path;
-		path = NULL;
-	}
+	/*	if (path != NULL)
+	 {
+	 delete[] path;
+	 path = NULL;
+	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	path = new int[subcontiglistsize];
 	path[0] = subcontiglistsize - 1;
@@ -1668,9 +1733,23 @@ int Ccorrector::froutebysupport(int index)
 			if (c)
 			{
 				if (ispositive)
-					distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+				{
+					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)])
+					{
+						distji = 0;
+					}
+					else
+						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+				}
 				else
-					distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+				{
+					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)])
+					{
+						distji = 0;
+					}
+					else
+						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+				}
 				b = dist[i] - distji;
 				if (b == dist[j])
 				{
@@ -1683,13 +1762,13 @@ int Ccorrector::froutebysupport(int index)
 	}
 	return k;
 }
-int Ccorrector::froutebysimilarity(int index)
+int Ccorrector::froutebysimilarity(int index, int *&dist, int *&path)
 {
-	if (path)
-	{
-		delete[] path;
-		path = NULL;
-	}
+	/*	if (path)
+	 {
+	 delete[] path;
+	 path = NULL;
+	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	path = new int[subcontiglistsize];
 	path[0] = subcontiglistsize - 1;
@@ -1768,13 +1847,13 @@ int Ccorrector::froutebysimilarity(int index)
 	return k;
 }
 
-void Ccorrector::bestnrouteofsimilarity(int index, int n)
+void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath)
 {
-	if (path)
-	{
-		delete[] path;
-		path = NULL;
-	}
+	/*	if (path)
+	 {
+	 delete[] path;
+	 path = NULL;
+	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	path = new int[subcontiglistsize];
 	path[0] = subcontiglistsize - 1;
@@ -1852,7 +1931,7 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n)
 				if (result != pdist[j].end())
 				{
 					(*counter)--;
-					nfroutebysimilarity2(index, counter, j, pathposition, result - pdist[j].begin());
+					nfroutebysimilarity2(index, counter, j, pathposition, result - pdist[j].begin(), path, pdist, ppath);
 					if (*counter == 0)
 						break;
 				}
@@ -1869,8 +1948,10 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n)
 		ppath.push_back(ppath.back());
 		(*counter)--;
 	}
+	delete[] path;
+	path = NULL;
 }
-void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathposition, int jposition)
+void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathposition, int jposition, int *&path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath)
 {
 	path[pathposition++] = j;
 	int i = j;
@@ -1941,7 +2022,7 @@ void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathpo
 				if (result != pdist[j].end())
 				{
 					(*counter)--;
-					nfroutebysimilarity2(index, counter, j, pathposition, result - pdist[j].begin());
+					nfroutebysimilarity2(index, counter, j, pathposition, result - pdist[j].begin(), path, pdist, ppath);
 					if (*counter == 0)
 						break;
 				}
@@ -1960,7 +2041,7 @@ void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathpo
 	}
 }
 
-void Ccorrector::nfroutebysimilarity(int index, int n)
+void Ccorrector::nfroutebysimilarity(int index, int n, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath)
 {
 	ppath.clear();
 	int tempbiggest;
@@ -2076,14 +2157,15 @@ void Ccorrector::nfroutebysimilarity(int index, int n)
 		}
 	}
 }
-int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> path)
+int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath)
 {
 	int temp;
 	bool ispositive;
 	bool c;
 	vector<int> sum;
+	int consume;
 	vector<CMyVectorInt>::iterator it;
-	for (it = path.begin(); it != path.end(); it++)
+	for (it = ppath.begin(); it != ppath.end(); it++)
 	{
 		sum.push_back(0);
 		CMyVectorInt::iterator it2;
@@ -2128,9 +2210,14 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> path)
 					ispositive = false;
 				}
 				if (ispositive)
-					sum.back() += max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+					consume = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
 				else
-					sum.back() += max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+					consume = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+				if (consume < 0)
+				{
+					consume = 0;
+				}
+				sum.back() += consume;
 			}
 		}
 	}
@@ -2148,27 +2235,34 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> path)
 	return r;
 }
 Ccorrector::Ccorrector(char* lrfile, char* ctfile) :
-		dist(NULL), path(NULL), lrfilename(lrfile), ctfilename(ctfile)
+		lrfilename(lrfile), ctfilename(ctfile)
 {
 	CUndigraph undigraph;
 	this->undigraph = undigraph;
 }
 Ccorrector::~Ccorrector()
 {
-	if (path)
-		delete[] path;
-	if (dist)
-		delete[] dist;
+	/*	if (path)
+	 delete[] path;
+	 if (dist)
+	 delete[] dist;
+	 */
 }
 bool Ccorrector::findBestRouteBySimilarity()
 {
 	int m;
+	int *dist = NULL;
+	int *path = NULL;
 	for (int i = 0; i < undigraph.subundigraphs.size(); i++)
 	{
-		fpathbysimilarity(i);
+		fpathbysimilarity(i, dist);
 		logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1] << ':'
 				<< endl;
-		m = froutebysimilarity(i);
+		m = froutebysimilarity(i, dist, path);
+		delete[] path;
+		delete[] dist;
+		path = NULL;
+		dist = NULL;
 		for (int j = m - 1; j >= 0; j--)
 			logfile << path[j] << '"' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.contigname << ':' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.headindex << '-'
 					<< undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.tailindex << '"' << "->";
@@ -2178,12 +2272,18 @@ bool Ccorrector::findBestRouteBySimilarity()
 bool Ccorrector::findBestRouteBySupport()
 {
 	int m;
+	int *dist = NULL;
+	int *path = NULL;
 	for (int i = 0; i < undigraph.subundigraphs.size(); i++)
 	{
-		fpathbysupport(i);
+		fpathbysupport(i, dist);
 		logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1] << ':'
 				<< endl;
-		m = froutebysupport(i);
+		m = froutebysupport(i, dist, path);
+		delete[] path;
+		delete[] dist;
+		path = NULL;
+		dist = NULL;
 		for (int j = m - 1; j >= 0; j--)
 			logfile << path[j] << '"' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.contigname << ':' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.headindex << '-'
 					<< undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.tailindex << '"' << "->";
@@ -2192,40 +2292,61 @@ bool Ccorrector::findBestRouteBySupport()
 }
 bool Ccorrector::findBestNRoute(int n)
 {
-	int m;
-	ofstream correctedfile("longreadcorrected.fa", ios::trunc);
-	for (int i = 0; i < undigraph.subundigraphs.size(); i++)
+#pragma omp parallel
 	{
-		nfpathbysimilarity(i, n);
-		logfile << endl << endl << "the longest " << n << " routes for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " are :";
-		for (CMyVectorInt::iterator it = pdist.back().begin(); it != pdist.back().end(); it++)
+		std::vector<CMyVectorInt> pdist;
+		std::vector<CMyVectorInt> ppath;
+		int *path = NULL;
+		int i;
+		string pnum;
+		stringstream ss;
+		ss << omp_get_thread_num();
+		ss >> pnum;
+		string s = "longreadcorrected_" + pnum + ".fa";
+//	string s = "longreadcorrected.fa";
+		ofstream correctedfile(s.c_str(), ios::trunc);
+#pragma omp for private(path,pdist,ppath)
+		for (i = 0; i < undigraph.subundigraphs.size(); i++)
 		{
-			logfile << (*it) << ',';
-		}
-		logfile << endl;
+			nfpathbysimilarity(i, n, pdist);
+//		logfile << endl << endl << "the longest " << n << " routes for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " are :";
+//		for (CMyVectorInt::iterator it = pdist.back().begin(); it != pdist.back().end(); it++)
+//		{
+//			logfile << (*it) << ',';
+//		}
+//		logfile << endl;
 
-//		nfroutebysimilarity(i, n);
-		bestnrouteofsimilarity(i, n);
-		vector<CMyVectorInt>::iterator it;
-		for (it = ppath.begin(); it != ppath.end(); it++)
+			bestnrouteofsimilarity(i, n, path, pdist, ppath);
+//		vector<CMyVectorInt>::iterator it;
+//		for (it = ppath.begin(); it != ppath.end(); it++)
+//		{
+//			for (int j = it->size() - 1; j >= 0; j--)
+//				logfile << (*it)[j] << '"' << undigraph.subundigraphs[i].Subconitglist[(*it)[j]].subcontig.contigname << '"' << "->";
+//			logfile << endl;
+//		}
+
+//		logfile << "The most supported route is: " << endl;
+			int k = leastcostofn(i, ppath);
+//		for (int j = ppath[k].size() - 1; j >= 0; j--)
+//			logfile << ppath[k][j] << '"' << undigraph.subundigraphs[i].Subconitglist[ppath[k][j]].subcontig.contigname << '"' << "->";
+//		logfile << endl;
+			correctedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
+			docorrect(i, k, correctedfile, ppath);
+		}
+	}
+	ofstream uncorrectedfile("longreaduncorrected.fa", ios::trunc);
+	hash_map<string, Clongread, str_hash, str_equal>::iterator hmit;
+	for (hmit = lrhm.begin(); hmit != lrhm.end(); hmit++)
+	{
+		if (!(*hmit).second.corrected)
 		{
-			for (int j = it->size() - 1; j >= 0; j--)
-				logfile << (*it)[j] << '"' << undigraph.subundigraphs[i].Subconitglist[(*it)[j]].subcontig.contigname << '"' << "->";
-			logfile << endl;
+			uncorrectedfile << ">" << (*hmit).first << endl;
+			uncorrectedfile << Realign(GetACut(lrfilename, (*hmit).second.index, 0, (*hmit).second.length - 1)) << endl;
 		}
-
-		logfile << "The most supported route is: " << endl;
-		int k = leastcostofn(i, ppath);
-		for (int j = ppath[k].size() - 1; j >= 0; j--)
-			logfile << ppath[k][j] << '"' << undigraph.subundigraphs[i].Subconitglist[ppath[k][j]].subcontig.contigname << '"' << "->";
-		logfile << endl;
-
-		correctedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
-		docorrect(i, k, correctedfile);
 	}
 	return true;
 }
-void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile)
+void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath)
 {
 
 	int i = 0, j = 0;
@@ -2273,16 +2394,19 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 		i = j + 1;
 	}
 	correctedfile << Realign(correctedstr) << endl;
+	lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].corrected = true;
 }
 
 int main(int argc, char *argv[])
 {
+	system("date");
 	logfilename = "log.txt";
 	preprocess = false;
 	preprocess_threshold = 4;
 	bestn = 4;
-	max_support = 3000;
-	if (argc < 5)
+	max_support = 0;
+	fixed_max_support = false;
+	if (argc < 3)
 	{
 		cout << "Invalid parameters!" << endl;
 		return -1;
@@ -2320,9 +2444,10 @@ int main(int argc, char *argv[])
 	std::map<std::string, std::vector<std::string> > result;
 	ParsingArgs pa;
 	pa.AddArgType('p', "preprocess", ParsingArgs::MAYBE_VALUE); //input filename
-	pa.AddArgType('m', "maxSuppot", ParsingArgs::MUST_VALUE); // output filename
-	pa.AddArgType('n', "bestn", ParsingArgs::MUST_VALUE);
+	pa.AddArgType('m', "maxSuppot", ParsingArgs::MAYBE_VALUE); // output filename
+	pa.AddArgType('n', "bestn", ParsingArgs::MAYBE_VALUE);
 	pa.AddArgType('l', "log", ParsingArgs::MAYBE_VALUE); //log filename
+	pa.AddArgType('t', "threads", ParsingArgs::MUST_VALUE);
 	std::string errPos;
 	int iRet = pa.Parse(tmpPara, result, errPos);
 	if (0 > iRet)
@@ -2365,12 +2490,16 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
-					std::stringstream ss;
-					ss << it->second[0];
-					ss >> max_support;
-					if (max_support == 65535)
-						cout << "warning: max_support cannot more than 65535!" << endl;
-					cout << "max_support = " << max_support << endl;
+					if (it->second.size() == 1)
+					{
+						std::stringstream ss;
+						ss << it->second[0];
+						ss >> max_support;
+						if (max_support == 65535)
+							cout << "warning: max_support cannot more than 65535!" << endl;
+						cout << "max_support = " << max_support << endl;
+						fixed_max_support = true;
+					}
 				}
 				argflag++;
 			}
@@ -2411,15 +2540,33 @@ int main(int argc, char *argv[])
 						ss >> logfilename;
 						logfile.open(logfilename.c_str());
 					}
-					cout << "logfile = " << bestn << endl;
+					cout << "logfile = " << logfilename << endl;
+				}
+			}
+
+			if (it->first.compare("t") == 0 || it->first.compare("threads") == 0)
+			{
+				if (it->second.size() != 1)
+				{
+					cout << "Invalid parameters!" << iRet << errPos << endl;
+					return -1;
+				}
+				else
+				{
+
+					std::stringstream ss;
+					ss << it->second[0];
+					ss >> numofthread;
+					omp_set_num_threads(numofthread);
+					cout << "threads = " << numofthread << endl;
 				}
 			}
 		}
-		if (argflag < 1)
-		{
-			cout << "Parameters aren't enough" << iRet << errPos << endl;
-			return -1;
-		}
+		/*		if (argflag < 1)
+		 {
+		 cout << "Parameters aren't enough" << iRet << errPos << endl;
+		 return -1;
+		 }*/
 	}
 
 	HashLongRead(longreadfile);
@@ -2445,5 +2592,7 @@ int main(int argc, char *argv[])
 //	corrector.findBestRouteBySupport();
 	corrector.findBestNRoute(bestn);
 	cout << "finished!" << endl;
+	cout << "max_support = " << max_support << endl;
+	system("date");
 	return 0;
 }

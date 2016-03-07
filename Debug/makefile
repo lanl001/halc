@@ -44,7 +44,7 @@ all: SequencingProject2
 SequencingProject2: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++  -o "SequencingProject2" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -fopenmp -o "SequencingProject2" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

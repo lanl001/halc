@@ -50,6 +50,8 @@ class Clongread
 public:
 	long index; //start from 0
 	int length;
+	bool corrected;
+	Clongread();
 };
 
 inline bool ComIndex(Ccutpoint first, Ccutpoint second)
@@ -149,27 +151,27 @@ class Ccorrector
 {
 private:
 	CUndigraph undigraph;
-	int* dist;
-	int* path;
-	std::vector<CMyVectorInt> pdist;
-	std::vector<CMyVectorInt> ppath;
+//	int* dist;
+//	int* path;
+//	std::vector<CMyVectorInt> pdist;
+//	std::vector<CMyVectorInt> ppath;
 	char* lrfilename;
 	char* ctfilename;
-	bool fpathbysupport(int index);
-	bool fpathbysimilarity(int index);
-	bool nfpathbysimilarity(int index, int n);
-	int froutebysupport(int index);
-	int froutebysimilarity(int index);
-	void nfroutebysimilarity(int index, int n);
-	void nfroutebysimilarity2(int index,int* counter,int j,int pathposition,int jposition);
-	void bestnrouteofsimilarity(int index,int n);
-	int leastcostofn(int index, std::vector<CMyVectorInt> path);
+	bool fpathbysupport(int index,int *&dist);
+	bool fpathbysimilarity(int index, int *&dist);
+	bool nfpathbysimilarity(int index, int n,std::vector<CMyVectorInt> &pdist);
+	int froutebysupport(int index,int *&dist,int *&path);
+	int froutebysimilarity(int index,int *&dist,int *&path);
+	void nfroutebysimilarity(int index, int n,std::vector<CMyVectorInt> &pdist,std::vector<CMyVectorInt> &ppath);
+	void nfroutebysimilarity2(int index,int* counter,int j,int pathposition,int jposition,int *&path,std::vector<CMyVectorInt> &pdist,std::vector<CMyVectorInt> &ppath);
+	void bestnrouteofsimilarity(int index,int n,int *path,std::vector<CMyVectorInt> &pdist,std::vector<CMyVectorInt> &ppath);
+	int leastcostofn(int index, std::vector<CMyVectorInt> &path);
 public:
 	Ccorrector(char* lrfile, char* ctfile);
 	~Ccorrector();
 	bool findBestRouteBySimilarity();
 	bool findBestRouteBySupport();
 	bool findBestNRoute(int n);
-	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile);
+	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile,std::vector<CMyVectorInt> &ppath);
 };
 #endif /* SEQUENCINGPROJECT_H_ */
