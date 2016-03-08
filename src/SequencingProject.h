@@ -172,6 +172,6 @@ public:
 	bool findBestRouteBySimilarity();
 	bool findBestRouteBySupport();
 	bool findBestNRoute(int n);
-	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile,std::vector<CMyVectorInt> &ppath);
+	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile,std::vector<CMyVectorInt> &ppath,std::ofstream &trimedcorrectedfile);
 };
 #endif /* SEQUENCINGPROJECT_H_ */

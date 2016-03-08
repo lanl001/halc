@@ -2303,8 +2303,10 @@ bool Ccorrector::findBestNRoute(int n)
 		ss << omp_get_thread_num();
 		ss >> pnum;
 		string s = "longreadcorrected_" + pnum + ".fa";
+		string s2 = "trimedlongreadedcorrected_"+ pnum + ".fa";
 //	string s = "longreadcorrected.fa";
 		ofstream correctedfile(s.c_str(), ios::trunc);
+		ofstream trimedcorrectedfile(s2.c_str(), ios::trunc);
 #pragma omp for private(path,pdist,ppath)
 		for (i = 0; i < undigraph.subundigraphs.size(); i++)
 		{
@@ -2331,7 +2333,8 @@ bool Ccorrector::findBestNRoute(int n)
 //			logfile << ppath[k][j] << '"' << undigraph.subundigraphs[i].Subconitglist[ppath[k][j]].subcontig.contigname << '"' << "->";
 //		logfile << endl;
 			correctedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
-			docorrect(i, k, correctedfile, ppath);
+			trimedcorrectedfile <<  ">" << undigraph.subundigraphs[i].longreadname << endl;
+			docorrect(i, k, correctedfile, ppath ,trimedcorrectedfile);
 		}
 	}
 	ofstream uncorrectedfile("longreaduncorrected.fa", ios::trunc);
@@ -2346,28 +2349,38 @@ bool Ccorrector::findBestNRoute(int n)
 	}
 	return true;
 }
-void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath)
+void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath , std::ofstream &trimedcorrectedfile)
 {
 
 	int i = 0, j = 0;
+	string trimedstr;
 	string correctedstr;
 	string temp;
+	bool flag = false;
 	int subcontigindex = ppath[ppathindex].size() - 2;
 	while (i < lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].length)
 	{
 		if (subcontigindex > 0)
 			j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadheadindex - 1;
 		else
+		{
 			j = lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].length - 1;
+			flag = false;
+		}
 		if (j >= i)
+		{
 			correctedstr += GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j);
+			if(flag)
+				trimedstr += GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j);
+			flag = true;
+		}
 		if (subcontigindex > 0)
 		{
 			do
 			{
 				i = j + 1;
 				j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
-				string temp2 = GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j);
+//				string temp2 = GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j);
 				temp = GetACut(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
 						undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex,
 						undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex);
@@ -2388,12 +2401,14 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 					}
 				}
 				correctedstr += temp;
+				trimedstr += temp;
 				subcontigindex--;
 			} while (subcontigindex > 0 && undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadheadindex == j + 1);
 		}
 		i = j + 1;
 	}
 	correctedfile << Realign(correctedstr) << endl;
+	trimedcorrectedfile << Realign(trimedstr) << endl;
 	lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].corrected = true;
 }
 
