@@ -17,6 +17,7 @@
 #include "SequencingProject.h"
 #include "BlasrAdapter.h"
 #include <omp.h>
+#include <limits>
 
 #define DISPLAY_NUM 10000
 #define BASE_PER_LINE 70
@@ -24,7 +25,9 @@
 using namespace __gnu_cxx;
 using namespace std;
 
+ofstream subcontigfile;
 ofstream logfile;
+string subcontigfilename;
 string logfilename;
 bool preprocess;
 int preprocess_threshold;
@@ -34,8 +37,10 @@ int bestn;
 vector<Ccutpoint> cutpoints;
 vector<CSubcontig> subcontigs;
 int numofthread;
-Clongread::Clongread():corrected(false),length(0)
-{}
+Clongread::Clongread() :
+		corrected(false), length(0), index(0)
+{
+}
 namespace __gnu_cxx
 {
 size_t str_hash::operator()(const string& str) const
@@ -89,8 +94,9 @@ void Sort()
 	sort(head, tail, ComIndex);
 }
 
-int GetBaseNum(ifstream& file, long unsigned int head, long unsigned int tail)
+int GetBaseNum(ifstream& file, fstream::pos_type head, fstream::pos_type tail)
 {
+	fstream::pos_type tempindex = file.tellg();
 	char* s;
 	string ss;
 	char* p;
@@ -107,6 +113,9 @@ int GetBaseNum(ifstream& file, long unsigned int head, long unsigned int tail)
 		p++;
 	}
 	free(s);
+	file.clear();
+	file.seekg(tempindex, ios::beg);
+	fstream::pos_type temp = file.tellg();
 	return res;
 }
 
@@ -115,21 +124,28 @@ void HashLongRead(ifstream& longreadfile)
 	char s[1001] = { 0 };
 	s[1000] = '\0';
 	string ss;
-	long unsigned int position = 0;
-	long unsigned int temp1 = 0, temp2 = 0;
+	fstream::pos_type position = 0;
+	unsigned long temp1 = 0, temp2 = 0;
 	bool flag = false;  //if the reading of headline hasn't been completed
 	bool flag2 = false;  //if the reading of conitgname hasn't been completed
 	bool flag3 = false;
 	string longreadname;
-	long unsigned int headindex;
-	long unsigned int tailindex;
-	long unsigned int tempindex;
-	while (longreadfile.read(s, 1000))
+	fstream::pos_type headindex;
+	fstream::pos_type tailindex;
+	fstream::pos_type tempindex;
+	unsigned long gcount;
+	while (longreadfile.read(s, 1000), longreadfile.gcount() != 0)
 	{
+		gcount = longreadfile.gcount();
+		if (gcount != 1000)
+		{
+			longreadfile.clear();
+			longreadfile.seekg(0, ios::end);
+		}
 		ss = s;
 		if (flag2)
 		{
-			long unsigned int p;
+			unsigned long p;
 			if ((p = ss.find(' ', 0)) != string::npos)
 			{
 				longreadname += ss.substr(temp1, p - temp1);
@@ -153,7 +169,7 @@ void HashLongRead(ifstream& longreadfile)
 		{
 			if ((temp2 = ss.find('\n', 0)) != string::npos)
 			{
-				position = (longreadfile.tellg() - 1000 + temp2);
+				position = (longreadfile.tellg() - gcount + temp2);
 				headindex = position;
 				lrhm[longreadname].index = position;
 				flag = false;
@@ -163,13 +179,13 @@ void HashLongRead(ifstream& longreadfile)
 		{
 			if (flag3)
 			{
-				tempindex = longreadfile.tellg();
-				tailindex = (longreadfile.tellg() - 1001 + temp1);
+//				tempindex = longreadfile.tellg();
+				tailindex = (longreadfile.tellg() - gcount - 1 + temp1);
 				lrhm[longreadname].length = GetBaseNum(longreadfile, headindex, tailindex);
-				longreadfile.seekg(tempindex, ios::beg);
+//				longreadfile.seekg(tempindex, ios::beg);
 			}
 			flag3 = true;
-			long unsigned int p;
+			unsigned long p;
 			if ((p = ss.find(" ", temp1)) != string::npos)
 			{
 				longreadname = ss.substr(temp1 + 1, p - temp1 - 1);
@@ -190,7 +206,8 @@ void HashLongRead(ifstream& longreadfile)
 			}
 			if ((temp2 = ss.find('\n', temp1)) != string::npos)
 			{
-				position = (longreadfile.tellg() - 999 + temp2);
+//				cout<<longreadfile.tellg()<<" "<<gcount<<endl;
+				position = (longreadfile.tellg() - gcount + 1 + temp2);
 				headindex = position;
 				lrhm[longreadname].index = position;
 			}
@@ -200,41 +217,41 @@ void HashLongRead(ifstream& longreadfile)
 		temp1 = 0;
 		temp2 = 0;
 	}
-	ss = s;
-	if (flag2)
-	{
-		long unsigned int p;
-		if ((p = ss.find(' ', 0)) != string::npos)
-		{
-			longreadname += ss.substr(temp1, p - temp1);
-			flag2 = false;
-		}
-		else
-		{
-			if ((p = ss.find('\n', temp1)) != string::npos)
-			{
-				longreadname += ss.substr(temp1, p - temp1);
-				flag2 = false;
-			}
-			else
-			{
-				longreadname += ss.substr(temp1, p - temp1);
-				flag2 = true;
-			}
-		}
-	}
-	if (flag)
-	{
-		if ((temp2 = ss.find('\n', 0)) != string::npos)
-		{
-			longreadfile.clear();
-			longreadfile.seekg(0, ios::end);
-			position = (longreadfile.tellg() + 1 - longreadfile.gcount() + temp2);
-			headindex = position;
-			lrhm[longreadname].index = position;
-			flag = false;
-		}
-	}
+	/*	ss = s;
+	 if (flag2)
+	 {
+	 unsigned long p;
+	 if ((p = ss.find(' ', 0)) != string::npos)
+	 {
+	 longreadname += ss.substr(temp1, p - temp1);
+	 flag2 = false;
+	 }
+	 else
+	 {
+	 if ((p = ss.find('\n', temp1)) != string::npos)
+	 {
+	 longreadname += ss.substr(temp1, p - temp1);
+	 flag2 = false;
+	 }
+	 else
+	 {
+	 longreadname += ss.substr(temp1, p - temp1);
+	 flag2 = true;
+	 }
+	 }
+	 }
+	 if (flag)
+	 {
+	 if ((temp2 = ss.find('\n', 0)) != string::npos)
+	 {
+	 longreadfile.clear();
+	 longreadfile.seekg(0, ios::end);
+	 position = (longreadfile.tellg() + 1 - longreadfile.gcount() + temp2);
+	 headindex = position;
+	 lrhm[longreadname].index = position;
+	 flag = false;
+	 }
+	 }*/
 	longreadfile.clear();
 	longreadfile.seekg(0, ios::end);
 	tailindex = longreadfile.tellg() - 1;
@@ -374,21 +391,23 @@ void HashContig(ifstream& contigfile)
 	char s[1001] = { 0 };
 	s[1000] = '\0';
 	string ss;
-	long unsigned int position = 0;
-	long unsigned int temp1 = 0, temp2 = 0;
+	fstream::pos_type position = 0;
+	unsigned long temp1 = 0, temp2 = 0;
 	bool flag = false; //if the reading of headline hasn't been completed
 	bool flag2 = false; //if the reading of contigname hasn't been completed
 	bool flag3 = false;
 	string contigname;
-	long unsigned int headindex;
-	long unsigned int tailindex;
-	long unsigned int tempindex;
-	while (contigfile.read(s, 1000))
+	fstream::pos_type headindex;
+	fstream::pos_type tailindex;
+	fstream::pos_type tempindex;
+	unsigned long gcount;
+	while (contigfile.read(s, 1000), contigfile.gcount() != 0)
 	{
+		gcount = contigfile.gcount();
 		ss = s;
 		if (flag2)
 		{
-			long unsigned int p;
+			unsigned long p;
 			if ((p = ss.find(' ', 0)) != string::npos)
 			{
 				contigname += ss.substr(temp1, p - temp1);
@@ -412,7 +431,7 @@ void HashContig(ifstream& contigfile)
 		{
 			if ((temp2 = ss.find('\n', 0)) != string::npos)
 			{
-				position = (contigfile.tellg() - 1000 + temp2);
+				position = (contigfile.tellg() - gcount + temp2);
 				headindex = position;
 				cthm[contigname].index = position;
 				flag = false;
@@ -422,13 +441,13 @@ void HashContig(ifstream& contigfile)
 		{
 			if (flag3)
 			{
-				tempindex = contigfile.tellg();
-				tailindex = (contigfile.tellg() - 1001 + temp1);
+//				tempindex = contigfile.tellg();
+				tailindex = (contigfile.tellg() - gcount - 1 + temp1);
 				cthm[contigname].length = GetBaseNum(contigfile, headindex, tailindex);
-				contigfile.seekg(tempindex, ios::beg);
+//				contigfile.seekg(tempindex, ios::beg);
 			}
 			flag3 = true;
-			long unsigned int p;
+			unsigned long p;
 			if ((p = ss.find(" ", temp1)) != string::npos)
 			{
 				contigname = ss.substr(temp1 + 1, p - temp1 - 1);
@@ -449,7 +468,7 @@ void HashContig(ifstream& contigfile)
 			}
 			if ((temp2 = ss.find('\n', temp1)) != string::npos)
 			{
-				position = (contigfile.tellg() - 999 + temp2);
+				position = (contigfile.tellg() - gcount + 1 + temp2);
 				headindex = position;
 				cthm[contigname].index = position;
 			}
@@ -461,7 +480,7 @@ void HashContig(ifstream& contigfile)
 	}
 	contigfile.clear();
 	contigfile.seekg(0, ios::end);
-	tailindex = contigfile.tellg();
+	tailindex = contigfile.tellg() - 1;
 	cthm[contigname].length = GetBaseNum(contigfile, headindex, tailindex);
 }
 
@@ -474,7 +493,7 @@ string Realign(string source)
 	return source;
 }
 
-string GetACut(char *argv, long position, int begin, int end)
+string GetACut(char *argv, fstream::pos_type position, int begin, int end)
 {
 	char c;
 	int p = -1;
@@ -510,13 +529,12 @@ string GetACut(char *argv, long position, int begin, int end)
 
 void GetSubContigs(char *contigfilename)
 {
-	ofstream subcontigfile;
-	subcontigfile.open("subcontigs.fa");
-	if (!subcontigfile.is_open())
-	{
-		cout << "Failed to create file subcontigs.fa";
-		return;
-	}
+//	subcontigfile.open("subcontigs.fa");
+	/*	if (!subcontigfile.is_open())
+	 {
+	 cout << "Failed to create file subcontigs.fa";
+	 return;
+	 }*/
 	vector<Ccutpoint>::iterator it;
 	int stack = 0;
 	int head = 0;
@@ -1004,7 +1022,7 @@ bool CSubUndigraph::getEdges()
 }
 
 //CUndigraph undigraph;
-hash_map<pair<unsigned int, unsigned int>, unsigned int, map_hash, map_equal> CUndigraph::graph[3];
+hash_map<pair<unsigned long, unsigned long>, unsigned short, map_hash, map_equal> CUndigraph::graph[3];
 vector<CSubUndigraph> CUndigraph::subundigraphs;
 vector<vector<CSubcontig> > CSubUndigraph::contiglist;
 string CSubUndigraph::lralignedseq;
@@ -1021,176 +1039,176 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	{ //A->B||B->A
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
 		{
-			CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 //			cout<<CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)]<<endl;
 		}
 		else
 		{
-			if (++CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cout << "warning:reached max_support" << endl;
-					--CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cout << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
-		edges[0][pair<unsigned int, unsigned int>(contig1.index, contig2.index)] = true;
+		logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
+		edges[0][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
 	}
 	else if (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '-')
 	{ //-A->-B||-B->-A
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
-			CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cout << "warning:reached max_support" << endl;
-					--CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cout << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+		logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
 
-		edges[0][pair<unsigned int, unsigned int>(contig2.index, contig1.index)] = true;
+		edges[0][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs <= contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '-'))
 	{ //A->-B
 		if (contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex)
-			CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cout << "warning:reached max_support" << endl;
-					--CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cout << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
+		logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
 
-		edges[1][pair<unsigned int, unsigned int>(contig1.index, contig2.index)] = true;
+		edges[1][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '-'))
 	{ //B->-A
 		if (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex)
-			CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cout << "warning:reached max_support" << endl;
-					--CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cout << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[1][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+		logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
 
-		edges[1][pair<unsigned int, unsigned int>(contig2.index, contig1.index)] = true;
+		edges[1][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs <= contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
 	{ //-A->B
 		if (contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex)
-			CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cout << "warning:reached max_support" << endl;
-					--CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cout << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
+		logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
 
-		edges[2][pair<unsigned int, unsigned int>(contig1.index, contig2.index)] = true;
+		edges[2][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
 	{ //-B->A
 		if (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex)
-			CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cout << "warning:reached max_support" << endl;
-					--CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cout << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[2][pair<unsigned int, unsigned int>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
-		edges[2][pair<unsigned int, unsigned int>(contig2.index, contig1.index)] = true;
+		logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+		edges[2][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
 	}
 	else
 		return false;
@@ -1414,15 +1432,15 @@ bool Ccorrector::fpathbysupport(int index, int *&dist)
 	bool ispositive;
 	//bool c;
 	bool c = true;
-	for (int i = 0; i < subcontiglistsize; i++)
+	for (unsigned long i = 0; i < subcontiglistsize; i++)
 	{
 		k = max_support * i;
-		for (int j = 0; j < i; j++)
+		for (unsigned long j = 0; j < i; j++)
 		{
 			char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 			char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-			unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-			unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+			unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+			unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 			if ((jstrand == '+') && (istrand == '+'))
 			{
 				temp = 0;
@@ -1455,14 +1473,14 @@ bool Ccorrector::fpathbysupport(int index, int *&dist)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1471,21 +1489,21 @@ bool Ccorrector::fpathbysupport(int index, int *&dist)
 			{
 				if (ispositive)
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)];
 				}
 				else
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)];
 				}
 				if ((dist[j] + distji) < k)
 				{
@@ -1512,15 +1530,15 @@ bool Ccorrector::fpathbysimilarity(int index, int *&dist)
 	int temp;
 	bool ispositive;
 	bool c;
-	for (int i = 0; i < subcontiglistsize; i++)
+	for (unsigned long i = 0; i < subcontiglistsize; i++)
 	{
 		k = 0;
-		for (int j = 0; j < i; j++)
+		for (unsigned long j = 0; j < i; j++)
 		{
 			char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 			char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-			unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-			unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+			unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+			unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 			if ((jstrand == '+') && (istrand == '+'))
 			{
 				temp = 0;
@@ -1553,14 +1571,14 @@ bool Ccorrector::fpathbysimilarity(int index, int *&dist)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1582,7 +1600,7 @@ bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> 
 {
 	pdist.clear();
 	vector<int>::iterator it;
-	for (int i = 0; i < undigraph.subundigraphs[index].Subconitglist.size(); i++)
+	for (unsigned long i = 0; i < undigraph.subundigraphs[index].Subconitglist.size(); i++)
 	{
 		CMyVectorInt line;
 		pdist.push_back(line);
@@ -1593,15 +1611,15 @@ bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> 
 	int temp;
 	bool ispositive;
 	bool c;
-	for (int i = 1; i < undigraph.subundigraphs[index].Subconitglist.size(); i++)
+	for (unsigned long i = 1; i < undigraph.subundigraphs[index].Subconitglist.size(); i++)
 	{
 		k.clear();
-		for (int j = 0; j < i; j++)
+		for (unsigned long j = 0; j < i; j++)
 		{
 			char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 			char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-			unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-			unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+			unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+			unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 			if ((jstrand == '+') && (istrand == '+'))
 			{
 				temp = 0;
@@ -1634,14 +1652,14 @@ bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> 
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1684,8 +1702,8 @@ int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 		{
 			char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 			char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-			unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-			unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+			unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+			unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 			if ((jstrand == '+') && (istrand == '+'))
 			{
 				temp = 0;
@@ -1718,14 +1736,14 @@ int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1734,21 +1752,21 @@ int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 			{
 				if (ispositive)
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)];
 				}
 				else
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)];
 				}
 				b = dist[i] - distji;
 				if (b == dist[j])
@@ -1785,8 +1803,8 @@ int Ccorrector::froutebysimilarity(int index, int *&dist, int *&path)
 		{
 			char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 			char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-			unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-			unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+			unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+			unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 			if ((jstrand == '+') && (istrand == '+'))
 			{
 				temp = 0;
@@ -1819,14 +1837,14 @@ int Ccorrector::froutebysimilarity(int index, int *&dist, int *&path)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1877,8 +1895,8 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 		{
 			char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 			char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-			unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-			unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+			unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+			unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 			if ((jstrand == '+') && (istrand == '+'))
 			{
 				temp = 0;
@@ -1911,14 +1929,14 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1968,8 +1986,8 @@ void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathpo
 		{
 			char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 			char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-			unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-			unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+			unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+			unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 			if ((jstrand == '+') && (istrand == '+'))
 			{
 				temp = 0;
@@ -2002,14 +2020,14 @@ void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathpo
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -2080,8 +2098,8 @@ void Ccorrector::nfroutebysimilarity(int index, int n, std::vector<CMyVectorInt>
 			{
 				char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 				char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-				unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-				unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+				unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+				unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 				if ((jstrand == '+') && (istrand == '+'))
 				{
 					temp = 0;
@@ -2114,14 +2132,14 @@ void Ccorrector::nfroutebysimilarity(int index, int n, std::vector<CMyVectorInt>
 				}
 				if (ispositive)
 				{
-					if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+					if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 						c = true;
 					else
 						c = false;
 				}
 				else
 				{
-					if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned int, unsigned int>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+					if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 						c = true;
 					else
 						c = false;
@@ -2161,7 +2179,6 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath)
 {
 	int temp;
 	bool ispositive;
-	bool c;
 	vector<int> sum;
 	int consume;
 	vector<CMyVectorInt>::iterator it;
@@ -2177,8 +2194,8 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath)
 				int j = *it2;
 				char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
 				char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-				unsigned int jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-				unsigned int iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
+				unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
+				unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
 				if ((jstrand == '+') && (istrand == '+'))
 				{
 					temp = 0;
@@ -2210,9 +2227,9 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath)
 					ispositive = false;
 				}
 				if (ispositive)
-					consume = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(jindexofsubcontig, iindexofsubcontig)];
+					consume = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)];
 				else
-					consume = max_support - undigraph.graph[temp][pair<unsigned int, unsigned int>(iindexofsubcontig, jindexofsubcontig)];
+					consume = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)];
 				if (consume < 0)
 				{
 					consume = 0;
@@ -2253,7 +2270,7 @@ bool Ccorrector::findBestRouteBySimilarity()
 	int m;
 	int *dist = NULL;
 	int *path = NULL;
-	for (int i = 0; i < undigraph.subundigraphs.size(); i++)
+	for (unsigned long i = 0; i < undigraph.subundigraphs.size(); i++)
 	{
 		fpathbysimilarity(i, dist);
 		logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1] << ':'
@@ -2274,7 +2291,7 @@ bool Ccorrector::findBestRouteBySupport()
 	int m;
 	int *dist = NULL;
 	int *path = NULL;
-	for (int i = 0; i < undigraph.subundigraphs.size(); i++)
+	for (unsigned long i = 0; i < undigraph.subundigraphs.size(); i++)
 	{
 		fpathbysupport(i, dist);
 		logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1] << ':'
@@ -2297,44 +2314,25 @@ bool Ccorrector::findBestNRoute(int n)
 		std::vector<CMyVectorInt> pdist;
 		std::vector<CMyVectorInt> ppath;
 		int *path = NULL;
-		int i;
+		unsigned long i;
 		string pnum;
 		stringstream ss;
 		ss << omp_get_thread_num();
 		ss >> pnum;
 		string s = "longreadcorrected_" + pnum + ".fa";
-		string s2 = "trimedlongreadedcorrected_"+ pnum + ".fa";
+		string s2 = "trimedlongreadedcorrected_" + pnum + ".fa";
 //	string s = "longreadcorrected.fa";
 		ofstream correctedfile(s.c_str(), ios::trunc);
-		ofstream trimedcorrectedfile(s2.c_str(), ios::trunc);
+		ofstream trimedcorrectedfile;//(s2.c_str(), ios::trunc);
 #pragma omp for private(path,pdist,ppath)
 		for (i = 0; i < undigraph.subundigraphs.size(); i++)
 		{
 			nfpathbysimilarity(i, n, pdist);
-//		logfile << endl << endl << "the longest " << n << " routes for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " are :";
-//		for (CMyVectorInt::iterator it = pdist.back().begin(); it != pdist.back().end(); it++)
-//		{
-//			logfile << (*it) << ',';
-//		}
-//		logfile << endl;
-
 			bestnrouteofsimilarity(i, n, path, pdist, ppath);
-//		vector<CMyVectorInt>::iterator it;
-//		for (it = ppath.begin(); it != ppath.end(); it++)
-//		{
-//			for (int j = it->size() - 1; j >= 0; j--)
-//				logfile << (*it)[j] << '"' << undigraph.subundigraphs[i].Subconitglist[(*it)[j]].subcontig.contigname << '"' << "->";
-//			logfile << endl;
-//		}
-
-//		logfile << "The most supported route is: " << endl;
 			int k = leastcostofn(i, ppath);
-//		for (int j = ppath[k].size() - 1; j >= 0; j--)
-//			logfile << ppath[k][j] << '"' << undigraph.subundigraphs[i].Subconitglist[ppath[k][j]].subcontig.contigname << '"' << "->";
-//		logfile << endl;
 			correctedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
-			trimedcorrectedfile <<  ">" << undigraph.subundigraphs[i].longreadname << endl;
-			docorrect(i, k, correctedfile, ppath ,trimedcorrectedfile);
+			//trimedcorrectedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
+			docorrect(i, k, correctedfile, ppath, trimedcorrectedfile);
 		}
 	}
 	ofstream uncorrectedfile("longreaduncorrected.fa", ios::trunc);
@@ -2349,7 +2347,18 @@ bool Ccorrector::findBestNRoute(int n)
 	}
 	return true;
 }
-void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath , std::ofstream &trimedcorrectedfile)
+
+string turncapitaltosmall(string raw)
+{
+	string::iterator it;
+	for (it = raw.begin(); it != raw.end(); it++)
+	{
+		(*it) += 32;
+	}
+	return raw;
+}
+
+void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath, std::ofstream &trimedcorrectedfile)
 {
 
 	int i = 0, j = 0;
@@ -2369,9 +2378,9 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 		}
 		if (j >= i)
 		{
-			correctedstr += GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j);
-			if(flag)
-				trimedstr += GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j);
+			correctedstr += turncapitaltosmall(GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j));
+			if (flag)
+				trimedstr += turncapitaltosmall(GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j));
 			flag = true;
 		}
 		if (subcontigindex > 0)
@@ -2408,14 +2417,16 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 		i = j + 1;
 	}
 	correctedfile << Realign(correctedstr) << endl;
-	trimedcorrectedfile << Realign(trimedstr) << endl;
+	//trimedcorrectedfile << Realign(trimedstr) << endl;
 	lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].corrected = true;
 }
 
 int main(int argc, char *argv[])
 {
 	system("date");
+	std::ios::sync_with_stdio(false);
 	logfilename = "log.txt";
+	subcontigfilename = "subcontigs.fa";
 	preprocess = false;
 	preprocess_threshold = 4;
 	bestn = 4;
@@ -2424,6 +2435,7 @@ int main(int argc, char *argv[])
 	if (argc < 3)
 	{
 		cout << "Invalid parameters!" << endl;
+		system("cat readme.txt");
 		return -1;
 	}
 	ifstream alignfile, contigfile, longreadfile;
@@ -2459,15 +2471,17 @@ int main(int argc, char *argv[])
 	std::map<std::string, std::vector<std::string> > result;
 	ParsingArgs pa;
 	pa.AddArgType('p', "preprocess", ParsingArgs::MAYBE_VALUE); //input filename
-	pa.AddArgType('m', "maxSuppot", ParsingArgs::MAYBE_VALUE); // output filename
+	pa.AddArgType('m', "maxSupport", ParsingArgs::MAYBE_VALUE); // output filename
 	pa.AddArgType('n', "bestn", ParsingArgs::MAYBE_VALUE);
 	pa.AddArgType('l', "log", ParsingArgs::MAYBE_VALUE); //log filename
 	pa.AddArgType('t', "threads", ParsingArgs::MUST_VALUE);
+	pa.AddArgType('s', "subcontigfile", ParsingArgs::MAYBE_VALUE);
 	std::string errPos;
 	int iRet = pa.Parse(tmpPara, result, errPos);
 	if (0 > iRet)
 	{
-		cout << "Invalid parameters!" << iRet << errPos << endl;
+		cout << "Invalid parameters!" << endl << iRet << errPos << endl;
+		system("cat readme.txt");
 		return -1;
 	}
 	else
@@ -2481,6 +2495,7 @@ int main(int argc, char *argv[])
 				if (it->second.size() > 1)
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
+					system("cat readme.txt");
 					return -1;
 				}
 				else
@@ -2500,7 +2515,8 @@ int main(int argc, char *argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cout << "Invalid parameters!" << iRet << errPos << endl ;
+					system("cat readme.txt");
 					return -1;
 				}
 				else
@@ -2523,7 +2539,8 @@ int main(int argc, char *argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cout << "Invalid parameters!" << iRet << errPos << endl ;
+					system("cat readme.txt");
 					return -1;
 				}
 				else
@@ -2543,6 +2560,7 @@ int main(int argc, char *argv[])
 				if (it->second.size() > 1)
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
+					system("cat readme.txt");
 					return -1;
 				}
 				else
@@ -2553,9 +2571,35 @@ int main(int argc, char *argv[])
 						std::stringstream ss;
 						ss << it->second[0];
 						ss >> logfilename;
-						logfile.open(logfilename.c_str());
 					}
 					cout << "logfile = " << logfilename << endl;
+					logfile.open(logfilename.c_str());
+					if (!logfile.is_open())
+						cout << "filed to create logfile" << endl;
+				}
+			}
+
+			if (it->first.compare("s") == 0 || it->first.compare("subcontigfile") == 0)
+			{
+				if (it->second.size() > 1)
+				{
+					cout << "Invalid parameters!" << iRet << errPos << endl;
+					system("cat readme.txt");
+					return -1;
+				}
+				else
+				{
+					if (it->second.size() == 1)
+					{
+						subcontigfilename.clear();
+						std::stringstream ss;
+						ss << it->second[0];
+						ss >> subcontigfilename;
+					}
+					cout << "subcontigfile = " << subcontigfilename << endl;
+					subcontigfile.open(subcontigfilename.c_str());
+					if (!subcontigfile.is_open())
+						cout << "filed to create subcontigfile" << endl;
 				}
 			}
 
@@ -2564,6 +2608,7 @@ int main(int argc, char *argv[])
 				if (it->second.size() != 1)
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
+					system("cat readme.txt");
 					return -1;
 				}
 				else
@@ -2595,7 +2640,7 @@ int main(int argc, char *argv[])
 	{
 		BlasrAdapter adapter(preprocess_threshold, argv[2]);
 		adapter.RunAdapter(alignfile);
-		newalignfile.open("AdaptedBlasrResult.txt");
+		newalignfile.open("AdaptedBlasrResult.m5");
 	}
 	GetSubContigs(argv[2]);
 	if (preprocess)

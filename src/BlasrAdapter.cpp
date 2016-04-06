@@ -15,7 +15,7 @@ extern hash_map<string, Clongread, str_hash, str_equal> lrhm;
 extern hash_map<string, unsigned long, str_hash, str_equal> scthm;
 extern vector<Ccutpoint> cutpoints;
 extern void Sort();
-extern string GetACut(char *argv, long position, int begin, int end);
+extern string GetACut(char *argv, fstream::pos_type position, int begin, int end);
 
 BlasrAdapter::BlasrAdapter(int threshold, char * contigfile) :
 		mythreshold(threshold), contigfilename(contigfile)
@@ -25,6 +25,7 @@ BlasrAdapter::BlasrAdapter(int threshold, char * contigfile) :
 bool BlasrAdapter::ReSortCutPoints()
 {
 	sort(cutpoints.begin(), cutpoints.end(), ComFileindex);
+	return true;
 }
 
 bool BlasrAdapter::RunAdapter(std::ifstream &blasrfile)
@@ -34,6 +35,7 @@ bool BlasrAdapter::RunAdapter(std::ifstream &blasrfile)
 	ReSortCutPoints();
 	GetNewBlasrFile(blasrfile);
 	Sort();
+	return true;
 }
 
 bool BlasrAdapter::ChangeCutPoints()
@@ -64,6 +66,7 @@ bool BlasrAdapter::ChangeCutPoints()
 			}
 		}
 	}
+	return true;
 }
 
 bool BlasrAdapter::ChangeCutPointsReverse()
@@ -94,15 +97,16 @@ bool BlasrAdapter::ChangeCutPointsReverse()
 			}
 		}
 	}
+	return true;
 }
 
 bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 {
 	ofstream newblasrfile;
-	newblasrfile.open("AdaptedBlasrResult.txt");
+	newblasrfile.open("AdaptedBlasrResult.m5");
 	if (!newblasrfile.is_open())
 	{
-		cout << "AdaptedBlasrResult.txt";
+		cout << "AdaptedBlasrResult.m5";
 		return false;
 	}
 	blasrfile.clear();
@@ -347,4 +351,5 @@ bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 		}
 	}
 	newblasrfile.close();
+	return true;
 }

@@ -19,7 +19,7 @@ public:
 	int longreadindex;
 	bool ishead;
 	bool changed = false;
-	unsigned long fileindex;
+	std::fstream::pos_type fileindex;
 	//char strand;
 };
 
@@ -33,7 +33,7 @@ public:
 	int longreadtailindex;
 	unsigned int similarity;
 	std::string contigname;
-	unsigned int indexofsubcontigs;
+	unsigned long indexofsubcontigs;
 
 	bool operator==(const CSubcontig& obj) const;
 };
@@ -41,14 +41,14 @@ public:
 class Ccontig
 {
 public:
-	long index; //start from 0
+	std::fstream::pos_type index; //start from 0
 	int length; //number of bases
 };
 
 class Clongread
 {
 public:
-	long index; //start from 0
+	std::fstream::pos_type index; //start from 0
 	int length;
 	bool corrected;
 	Clongread();
@@ -96,7 +96,7 @@ public:
 	static std::vector<std::vector<CSubcontig> > contiglist; //contigs of a longread
 	std::string longreadname;
 	std::vector<CSubcontigEx> Subconitglist;//all subcontigs of a longread
-	__gnu_cxx::hash_map<std::pair<unsigned int, unsigned int>, bool, __gnu_cxx::map_hash, __gnu_cxx::map_equal> edges[3];
+	__gnu_cxx::hash_map<std::pair<unsigned long, unsigned long>, bool, __gnu_cxx::map_hash, __gnu_cxx::map_equal> edges[3];
 private:
 	int ctoffset;
 	int lroffset;
@@ -131,7 +131,7 @@ public:
 class CUndigraph
 {
 public:
-static __gnu_cxx::hash_map<std::pair<unsigned int, unsigned int>, unsigned int, __gnu_cxx::map_hash, __gnu_cxx::map_equal> graph[3];
+static __gnu_cxx::hash_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx::map_hash, __gnu_cxx::map_equal> graph[3];
 static void
 MakeUndigraph(std::ifstream& alignfile);
 static std::vector<CSubUndigraph> subundigraphs;
