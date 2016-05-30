@@ -11,6 +11,7 @@
 #include <ext/hash_map>
 #include<map>
 #include<fstream>
+#include<list>
 class Ccutpoint
 {
 public:
@@ -23,6 +24,12 @@ public:
 	//char strand;
 };
 
+struct Nspasenode
+{
+	int longreadheadindex;
+	int longreadtailindex;
+};
+
 class CSubcontig
 {
 public:
@@ -33,9 +40,13 @@ public:
 	int longreadtailindex;
 	unsigned int similarity;
 	std::string contigname;
+	int headoffset;
+	int tailoffset;
 	unsigned long indexofsubcontigs;
+	std::list<Nspasenode>* Nspace;
 
 	bool operator==(const CSubcontig& obj) const;
+	CSubcontig():headoffset(0),tailoffset(0),Nspace(NULL){}
 };
 
 class Ccontig
@@ -51,7 +62,10 @@ public:
 	std::fstream::pos_type index; //start from 0
 	int length;
 	bool corrected;
-	Clongread();
+	Clongread() :
+			corrected(false), length(0), index(0)
+	{
+	}
 };
 
 inline bool ComIndex(Ccutpoint first, Ccutpoint second)
@@ -83,6 +97,54 @@ struct map_equal
 	bool operator()(const pair<int, int>& m1, const pair<int, int>& m2) const;
 };
 }
+
+class Cfilebuffer
+{
+private:
+	char* buffer;
+	std::string myfilename;
+	long mysize;
+	long expectsize;
+	long startoffset;
+	long hited;
+	long nothited;
+public:
+	Cfilebuffer():hited(0),nothited(0){};
+	Cfilebuffer(std::string filename,long size):hited(0),nothited(0){
+		buffer = new char[size+1];
+		buffer[size] = '\0';
+		myfilename = filename;
+		expectsize = size;
+		startoffset = 0;
+		std::ifstream file(filename.c_str());
+		file.read(buffer,expectsize);
+		mysize = file.gcount();
+		buffer[mysize]='\0';
+		file.close();
+	}
+	void refreshbuffer(std::string filename,long size){
+			delete[] buffer;
+			buffer = new char[size+1];
+			buffer[size] = '\0';
+			myfilename = filename;
+			expectsize = size;
+			startoffset = 0;
+			std::ifstream file(filename.c_str());
+			file.read(buffer,expectsize);
+			mysize = file.gcount();
+			buffer[mysize]='\0';
+			file.close();
+	}
+	std::string Getstring(char *argv, std::fstream::pos_type begin, std::fstream::pos_type end);
+	~Cfilebuffer()
+	{
+		delete[] buffer;
+	}
+	float hitraio()
+	{
+		return (float)hited/(hited+nothited);
+	}
+};
 
 class CSubUndigraph
 {
@@ -168,10 +230,9 @@ private:
 	int leastcostofn(int index, std::vector<CMyVectorInt> &path);
 public:
 	Ccorrector(char* lrfile, char* ctfile);
-	~Ccorrector();
 	bool findBestRouteBySimilarity();
 	bool findBestRouteBySupport();
 	bool findBestNRoute(int n);
-	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile,std::vector<CMyVectorInt> &ppath,std::ofstream &trimedcorrectedfile);
+	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile,std::vector<CMyVectorInt> &ppath,Cfilebuffer &longreadbuffer,Cfilebuffer &contigbuffer);
 };
 #endif /* SEQUENCINGPROJECT_H_ */

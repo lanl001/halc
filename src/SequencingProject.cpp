@@ -7,17 +7,18 @@
 //============================================================================
 
 #include <iostream>
-#include<fstream>
-#include<vector>
+#include <fstream>
+#include <vector>
 #include <sstream>
-#include<map>
-#include<algorithm>
-#include<unistd.h>
+#include <map>
+#include <algorithm>
+#include <unistd.h>
 #include "parsingargs.h"
 #include "SequencingProject.h"
 #include "BlasrAdapter.h"
 #include <omp.h>
 #include <limits>
+#include <time.h>
 
 #define DISPLAY_NUM 10000
 #define BASE_PER_LINE 70
@@ -27,20 +28,21 @@ using namespace std;
 
 ofstream subcontigfile;
 ofstream logfile;
+bool printlog = false;
 string subcontigfilename;
+bool printsubcontgs = false;
 string logfilename;
+int buffersize;
 bool preprocess;
 int preprocess_threshold;
 unsigned short max_support;
 bool fixed_max_support;
 int bestn;
+bool iteration;
 vector<Ccutpoint> cutpoints;
 vector<CSubcontig> subcontigs;
 int numofthread;
-Clongread::Clongread() :
-		corrected(false), length(0), index(0)
-{
-}
+
 namespace __gnu_cxx
 {
 size_t str_hash::operator()(const string& str) const
@@ -122,7 +124,7 @@ int GetBaseNum(ifstream& file, fstream::pos_type head, fstream::pos_type tail)
 void HashLongRead(ifstream& longreadfile)
 {
 	char s[1001] = { 0 };
-	s[1000] = '\0';
+//	s[1000] = '\0';
 	string ss;
 	fstream::pos_type position = 0;
 	unsigned long temp1 = 0, temp2 = 0;
@@ -137,6 +139,7 @@ void HashLongRead(ifstream& longreadfile)
 	while (longreadfile.read(s, 1000), longreadfile.gcount() != 0)
 	{
 		gcount = longreadfile.gcount();
+		s[gcount] = '\0';
 		if (gcount != 1000)
 		{
 			longreadfile.clear();
@@ -217,41 +220,6 @@ void HashLongRead(ifstream& longreadfile)
 		temp1 = 0;
 		temp2 = 0;
 	}
-	/*	ss = s;
-	 if (flag2)
-	 {
-	 unsigned long p;
-	 if ((p = ss.find(' ', 0)) != string::npos)
-	 {
-	 longreadname += ss.substr(temp1, p - temp1);
-	 flag2 = false;
-	 }
-	 else
-	 {
-	 if ((p = ss.find('\n', temp1)) != string::npos)
-	 {
-	 longreadname += ss.substr(temp1, p - temp1);
-	 flag2 = false;
-	 }
-	 else
-	 {
-	 longreadname += ss.substr(temp1, p - temp1);
-	 flag2 = true;
-	 }
-	 }
-	 }
-	 if (flag)
-	 {
-	 if ((temp2 = ss.find('\n', 0)) != string::npos)
-	 {
-	 longreadfile.clear();
-	 longreadfile.seekg(0, ios::end);
-	 position = (longreadfile.tellg() + 1 - longreadfile.gcount() + temp2);
-	 headindex = position;
-	 lrhm[longreadname].index = position;
-	 flag = false;
-	 }
-	 }*/
 	longreadfile.clear();
 	longreadfile.seekg(0, ios::end);
 	tailindex = longreadfile.tellg() - 1;
@@ -513,6 +481,7 @@ string GetACut(char *argv, fstream::pos_type position, int begin, int end)
 	}
 	contigfile.seekg(+position + begin, ios::beg);
 	string res;
+
 	while (c = contigfile.get(), contigfile)
 	{
 		if (c != '\n' && c != ' ')
@@ -524,17 +493,135 @@ string GetACut(char *argv, fstream::pos_type position, int begin, int end)
 			break;
 	}
 	contigfile.close();
+//	cout << res << endl;
 	return res;
+}
+
+string GetACut2(char *argv, fstream::pos_type position, int begin, int end, Cfilebuffer &filebuffer)
+{
+	string res;
+	string temp;
+	int remain = begin;
+	fstream::pos_type p = position;
+	bool flag = false;
+	int p2;
+//	string::iterator it;
+	while (remain != 0)
+	{
+		p2 = 0;
+		temp = filebuffer.Getstring(argv, p, p + remain - 1);
+		p = p + remain;
+		remain = 0;
+		while ((p2 = temp.find('\n', p2)) != string::npos)
+		{
+			remain++;
+			p2++;
+		}
+		p2 = 0;
+		while ((p2 = temp.find(' ', p2)) != string::npos)
+		{
+			remain++;
+			p2++;
+		}
+	}
+	remain = end - begin + 1;
+	while (remain != 0)
+	{
+		p2 = 0;
+		res += filebuffer.Getstring(argv, p, p + remain - 1);
+		p = p + remain;
+		remain = 0;
+		while ((p2 = res.find('\n', p2)) != string::npos)
+		{
+			res.erase(p2, 1);
+			remain++;
+		}
+		p2 = 0;
+		while ((p2 = res.find(' ', p2)) != string::npos)
+		{
+			res.erase(p2, 1);
+			remain++;
+		}
+	}
+	return res;
+}
+
+string Cfilebuffer::Getstring(char *argv, fstream::pos_type begin, fstream::pos_type end)
+{
+	string temp;
+	if (strcmp(this->myfilename.c_str(), argv) == 0 && begin >= this->startoffset && begin <= this->startoffset + this->mysize - 1)
+	{
+		this->hited++;
+		if (end <= this->startoffset + this->mysize - 1)
+		{
+			temp.insert(0, buffer + begin - this->startoffset, (buffer + end - this->startoffset) - (buffer + begin - this->startoffset) + 1);
+		}
+		else if (end > this->startoffset + this->mysize - 1)
+		{
+			temp.insert(0, buffer + begin - this->startoffset, buffer + this->mysize - (buffer + begin - this->startoffset));
+			temp += this->Getstring(argv, this->startoffset + this->mysize, end);
+		}
+	}
+	else if (strcmp(this->myfilename.c_str(), argv) == 0 && (begin < this->startoffset || begin > this->startoffset + this->mysize - 1))
+	{
+		this->nothited++;
+		ifstream file(argv);
+		file.seekg(begin, ios::beg);
+		file.read(this->buffer, this->expectsize);
+		this->mysize = file.gcount();
+		if (this->mysize == 0)
+		{
+#pragma omp critical
+			{
+				cout << omp_get_thread_num() << "ERROR: Cfilebuffer: Can not read file at pos: " << begin << endl;
+				file.clear();
+				file.seekg(0, ios::end);
+				streampos p = file.tellg();
+				file.close();
+				cout << "file size =" << p << endl;
+				exit(-1);
+			}
+			string nullstring;
+			return nullstring;
+		}
+		this->buffer[mysize] = '\0';
+		file.close();
+		this->startoffset = begin;
+		temp = this->Getstring(argv, begin, end);
+	}
+	else if (strcmp(this->myfilename.c_str(), argv) != 0)
+	{
+		string filename(argv);
+		this->refreshbuffer(filename, this->mysize);
+		temp = this->Getstring(argv, begin, end);
+	}
+	return temp;
+}
+
+string lower(string raw)
+{
+	string::iterator it;
+	for (it = raw.begin(); it != raw.end(); it++)
+	{
+		if (isupper(*it))
+			(*it) += 32;
+	}
+	return raw;
+}
+
+string upper(string raw)
+{
+	string::iterator it;
+	for (it = raw.begin(); it != raw.end(); it++)
+	{
+		if (islower(*it))
+			(*it) -= 32;
+	}
+	return raw;
 }
 
 void GetSubContigs(char *contigfilename)
 {
-//	subcontigfile.open("subcontigs.fa");
-	/*	if (!subcontigfile.is_open())
-	 {
-	 cout << "Failed to create file subcontigs.fa";
-	 return;
-	 }*/
 	vector<Ccutpoint>::iterator it;
 	int stack = 0;
 	int head = 0;
@@ -576,8 +663,11 @@ void GetSubContigs(char *contigfilename)
 				tail = (*it).index;
 				if (stack != 0)
 				{ //((*(it + 1)).index != (*it).index) && stack != 0)
-					subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail - 1 << endl;
-					subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail - 1)) << endl;
+					if (printsubcontgs)
+					{
+						subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail - 1 << endl;
+						subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail - 1)) << endl;
+					}
 					CSubcontig subcontig;
 					subcontig.contigname = (*it).contigname;
 					subcontig.headindex = head;
@@ -594,8 +684,11 @@ void GetSubContigs(char *contigfilename)
 				{ //((*(it + 1)).index == (*it).index) && stack == 0)
 					if ((*(it + 1)).contigname == (*it).contigname)
 					{
-						subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail - 1 << endl;
-						subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail - 1)) << endl;
+						if (printsubcontgs)
+						{
+							subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail - 1 << endl;
+							subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail - 1)) << endl;
+						}
 						CSubcontig subcontig;
 						subcontig.contigname = (*it).contigname;
 						subcontig.headindex = head;
@@ -610,8 +703,11 @@ void GetSubContigs(char *contigfilename)
 					}
 					else
 					{
-						subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail << endl;
-						subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail)) << endl;
+						if (printsubcontgs)
+						{
+							subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail << endl;
+							subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail)) << endl;
+						}
 						CSubcontig subcontig;
 						subcontig.contigname = (*it).contigname;
 						subcontig.headindex = head;
@@ -627,8 +723,11 @@ void GetSubContigs(char *contigfilename)
 				}
 				else
 				{ //((*(it + 1)).index != (*it).index) && stack == 0)
-					subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail << endl;
-					subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail)) << endl;
+					if (printsubcontgs)
+					{
+						subcontigfile << ">" << (*it).contigname << "_" << head << "_" << tail << endl;
+						subcontigfile << Realign(GetACut(contigfilename, cthm[(*it).contigname].index, head, tail)) << endl;
+					}
 					CSubcontig subcontig;
 					subcontig.contigname = (*it).contigname;
 					subcontig.headindex = head;
@@ -776,14 +875,14 @@ int CSubUndigraph::getlrlength(int length)
 		p++;
 		it++;
 	}
-	logfile << ctalignedseq.substr(ctoffset, length) << endl;
-
+	if (printlog)
+		logfile << ctalignedseq.substr(ctoffset, length) << endl;
 	ctoffset += length;
 	matchlength = length;
 	string temp = lralignedseq.substr(lroffset, length);
 	lroffset += length;
-	logfile << temp << endl;
-
+	if (printlog)
+		logfile << temp << endl;
 	unsigned long q = 0;
 	while ((q = temp.find('-', q)) != string::npos)
 	{
@@ -806,13 +905,14 @@ int CSubUndigraph::getlrlengthreverse(int offset, int length)
 		p++;
 		it--;
 	}
-	logfile << ctalignedseq.substr(ctalignedseq.size() - ctoffset - length, length) << endl;
-
+	if (printlog)
+		logfile << ctalignedseq.substr(ctalignedseq.size() - ctoffset - length, length) << endl;
 	ctoffset += length;
 	matchlength = length;
 	string temp = lralignedseq.substr(lralignedseq.size() - lroffset - length, length);
 	lroffset += length;
-	logfile << temp << endl;
+	if (printlog)
+		logfile << temp << endl;
 
 	unsigned long q = 0;
 	while ((q = temp.find('-', q)) != string::npos)
@@ -826,7 +926,10 @@ int CSubUndigraph::getlrlengthreverse(int offset, int length)
 int CSubUndigraph::getSimilarity()
 {
 	string temp = matchpattern.substr(matchoffset, matchlength);
-	logfile << temp << endl;
+	if (printlog)
+	{
+		logfile << temp << endl;
+	}
 	int count = 0;
 	unsigned long q = 0;
 	while ((q = temp.find('*', q)) != string::npos)
@@ -841,7 +944,8 @@ int CSubUndigraph::getSimilarity()
 int CSubUndigraph::getSimilarityreverse()
 {
 	string temp = matchpattern.substr(matchpattern.size() - matchoffset - matchlength, matchlength);
-	logfile << temp << endl;
+	if (printlog)
+		logfile << temp << endl;
 	int count = 0;
 	unsigned long q = 0;
 	while ((q = temp.find('*', q)) != string::npos)
@@ -869,16 +973,20 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 			{
 				it->longreadheadindex = lrheadindex;
 				it->longreadtailindex = lrheadindex + getlrlength(it->tailindex - it->headindex - headoffset - tailoffset + 1) - 1;
+				it->headoffset = headoffset;
+				it->tailoffset = tailoffset;
 			}
 			else if (it == contiglist.back().begin())
 			{
 				it->longreadheadindex = lrheadindex;
 				it->longreadtailindex = lrheadindex + getlrlength(it->tailindex - it->headindex - headoffset + 1) - 1;
+				it->headoffset = headoffset;
 			}
 			else if ((it + 1) == contiglist.back().end())
 			{
 				it->longreadheadindex = (it - 1)->longreadtailindex + 1;
 				it->longreadtailindex = (it - 1)->longreadtailindex + getlrlength(it->tailindex - it->headindex - tailoffset + 1);
+				it->tailoffset = tailoffset;
 			}
 			else
 			{
@@ -890,7 +998,8 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 			{
 				contiglist.back().erase(it);
 				--it;
-				logfile << "erased" << endl;
+				if (printlog)
+					logfile << "erased" << endl;
 			}
 		}
 		else
@@ -901,18 +1010,22 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 				it->longreadtailindex = lrtailindex;
 				length = it->tailindex - it->headindex - tailoffset - headoffset + 1;
 				it->longreadheadindex = lrtailindex - getlrlengthreverse(ctalignedseq.size() - length - 1, length) + 1;
+				it->tailoffset = tailoffset;
+				it->headoffset = headoffset;
 			}
 			else if (it == contiglist.back().begin())
 			{
 				it->longreadtailindex = lrtailindex;
 				length = it->tailindex - it->headindex - tailoffset + 1;
 				it->longreadheadindex = lrtailindex - getlrlengthreverse(ctalignedseq.size() - length - 1, length) + 1;
+				it->tailoffset = tailoffset;
 			}
 			else if ((it + 1) == contiglist.back().end())
 			{
 				it->longreadtailindex = (it - 1)->longreadheadindex - 1;
 				length = it->tailindex - it->headindex - headoffset + 1;
 				it->longreadheadindex = (it - 1)->longreadheadindex - getlrlengthreverse(ctoffset, length);
+				it->headoffset = headoffset;
 			}
 			else
 			{
@@ -925,7 +1038,8 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 			{
 				contiglist.back().erase(it);
 				--it;
-				logfile << "erased" << endl;
+				if (printlog)
+					logfile << "erased" << endl;
 			}
 		}
 	}
@@ -967,8 +1081,8 @@ bool CSubUndigraph::getSubcontiglist()
 	contiglist.back().push_back(fakecontig_1);
 	CSubcontigEx temp;
 	temp.subcontig = fakecontig_1;
-	//temp.row = row;
-	//temp.column = 0;
+//temp.row = row;
+//temp.column = 0;
 	Subconitglist.push_back(temp);
 
 	vector<CSubcontigEx>::iterator it3;
@@ -1017,7 +1131,8 @@ bool CSubUndigraph::getEdges()
 			ittemp++;
 		}
 	}
-	logfile << endl;
+	if (printlog)
+		logfile << endl;
 	return true;
 }
 
@@ -1032,9 +1147,10 @@ string CSubUndigraph::ctalignedseq;
 
 bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 {
-	logfile << contig1.subcontig.strand << contig1.subcontig.contigname << '_' << contig1.subcontig.headindex << '_' << contig1.subcontig.tailindex << ' ' << contig1.subcontig.longreadheadindex << ' '
-			<< contig1.subcontig.longreadtailindex << "-->" << contig2.subcontig.strand << contig2.subcontig.contigname << '_' << contig2.subcontig.headindex << '_' << contig2.subcontig.tailindex
-			<< ' ' << contig2.subcontig.longreadheadindex << ' ' << contig2.subcontig.longreadtailindex << endl;
+	if (printlog)
+		logfile << contig1.subcontig.strand << contig1.subcontig.contigname << '_' << contig1.subcontig.headindex << '_' << contig1.subcontig.tailindex << ' ' << contig1.subcontig.longreadheadindex
+				<< ' ' << contig1.subcontig.longreadtailindex << "-->" << contig2.subcontig.strand << contig2.subcontig.contigname << '_' << contig2.subcontig.headindex << '_'
+				<< contig2.subcontig.tailindex << ' ' << contig2.subcontig.longreadheadindex << ' ' << contig2.subcontig.longreadtailindex << endl;
 	if (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '+')
 	{ //A->B||B->A
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
@@ -1063,7 +1179,8 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
+		if (printlog)
+			logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
 		edges[0][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
 	}
 	else if (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '-')
@@ -1091,7 +1208,8 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+		if (printlog)
+			logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
 
 		edges[0][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
 	}
@@ -1120,8 +1238,8 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
-
+		if (printlog)
+			logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
 		edges[1][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '-'))
@@ -1149,8 +1267,8 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
-
+		if (printlog)
+			logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
 		edges[1][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs <= contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
@@ -1178,8 +1296,8 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
-
+		if (printlog)
+			logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
 		edges[2][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
@@ -1207,7 +1325,8 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
-		logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+		if (printlog)
+			logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
 		edges[2][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
 	}
 	else
@@ -1382,7 +1501,8 @@ void CUndigraph::MakeUndigraph(ifstream& alignfile)
 			}
 			if (longreadnametemp != subundigraph.longreadname)
 			{
-				logfile << longreadnametemp << endl;
+				if (printlog)
+					logfile << longreadnametemp << endl;
 				longreadflag = false;
 				subundigraph.getSubcontiglist();
 				subundigraph.getEdges();
@@ -1418,11 +1538,7 @@ CMyVectorInt::CMyVectorInt() :
 
 bool Ccorrector::fpathbysupport(int index, int *&dist)
 {
-	/*	if (dist != NULL)
-	 {
-	 delete[] dist;
-	 dist = NULL;
-	 }*/
+
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	dist = new int[subcontiglistsize];
 	dist[0] = 0;
@@ -1430,7 +1546,6 @@ bool Ccorrector::fpathbysupport(int index, int *&dist)
 	int distji;
 	int temp;
 	bool ispositive;
-	//bool c;
 	bool c = true;
 	for (unsigned long i = 0; i < subcontiglistsize; i++)
 	{
@@ -1517,11 +1632,6 @@ bool Ccorrector::fpathbysupport(int index, int *&dist)
 }
 bool Ccorrector::fpathbysimilarity(int index, int *&dist)
 {
-	/*	if (dist)
-	 {
-	 delete[] dist;
-	 dist = NULL;
-	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	dist = new int[subcontiglistsize];
 	dist[0] = 0;
@@ -1681,11 +1791,6 @@ bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> 
 }
 int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 {
-	/*	if (path != NULL)
-	 {
-	 delete[] path;
-	 path = NULL;
-	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	path = new int[subcontiglistsize];
 	path[0] = subcontiglistsize - 1;
@@ -1782,11 +1887,6 @@ int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 }
 int Ccorrector::froutebysimilarity(int index, int *&dist, int *&path)
 {
-	/*	if (path)
-	 {
-	 delete[] path;
-	 path = NULL;
-	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	path = new int[subcontiglistsize];
 	path[0] = subcontiglistsize - 1;
@@ -1867,11 +1967,6 @@ int Ccorrector::froutebysimilarity(int index, int *&dist, int *&path)
 
 void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath)
 {
-	/*	if (path)
-	 {
-	 delete[] path;
-	 path = NULL;
-	 }*/
 	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
 	path = new int[subcontiglistsize];
 	path[0] = subcontiglistsize - 1;
@@ -2080,8 +2175,6 @@ void Ccorrector::nfroutebysimilarity(int index, int n, std::vector<CMyVectorInt>
 		int temp;
 		bool ispositive;
 		bool c;
-		/*if(!pdist[i].hasnext())
-		 break;*/
 		int biggest = pdist[i].getnext();
 		if (biggest == tempbiggest)
 			counter++;
@@ -2149,7 +2242,6 @@ void Ccorrector::nfroutebysimilarity(int index, int n, std::vector<CMyVectorInt>
 					distji = undigraph.subundigraphs[index].Subconitglist[j].subcontig.similarity;
 					b = biggest - distji;
 					CMyVectorInt::iterator result = find(pdist[j].begin(), pdist[j].end(), b);
-//					CMyVectorInt::iterator tempit;
 					if (result != pdist[j].end())
 					{
 						if (tempcounter > 0)
@@ -2257,14 +2349,7 @@ Ccorrector::Ccorrector(char* lrfile, char* ctfile) :
 	CUndigraph undigraph;
 	this->undigraph = undigraph;
 }
-Ccorrector::~Ccorrector()
-{
-	/*	if (path)
-	 delete[] path;
-	 if (dist)
-	 delete[] dist;
-	 */
-}
+
 bool Ccorrector::findBestRouteBySimilarity()
 {
 	int m;
@@ -2273,16 +2358,18 @@ bool Ccorrector::findBestRouteBySimilarity()
 	for (unsigned long i = 0; i < undigraph.subundigraphs.size(); i++)
 	{
 		fpathbysimilarity(i, dist);
-		logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1] << ':'
-				<< endl;
+		if (printlog)
+			logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1]
+					<< ':' << endl;
 		m = froutebysimilarity(i, dist, path);
 		delete[] path;
 		delete[] dist;
 		path = NULL;
 		dist = NULL;
 		for (int j = m - 1; j >= 0; j--)
-			logfile << path[j] << '"' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.contigname << ':' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.headindex << '-'
-					<< undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.tailindex << '"' << "->";
+			if (printlog)
+				logfile << path[j] << '"' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.contigname << ':' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.headindex
+						<< '-' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.tailindex << '"' << "->";
 	}
 	return true;
 }
@@ -2294,78 +2381,73 @@ bool Ccorrector::findBestRouteBySupport()
 	for (unsigned long i = 0; i < undigraph.subundigraphs.size(); i++)
 	{
 		fpathbysupport(i, dist);
-		logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1] << ':'
-				<< endl;
+		if (printlog)
+			logfile << endl << endl << "the longest route for " << undigraph.subundigraphs[i].longreadname << '(' << i << ')' << " is " << dist[undigraph.subundigraphs[i].Subconitglist.size() - 1]
+					<< ':' << endl;
 		m = froutebysupport(i, dist, path);
 		delete[] path;
 		delete[] dist;
 		path = NULL;
 		dist = NULL;
-		for (int j = m - 1; j >= 0; j--)
-			logfile << path[j] << '"' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.contigname << ':' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.headindex << '-'
-					<< undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.tailindex << '"' << "->";
+		if (printlog)
+			for (int j = m - 1; j >= 0; j--)
+				logfile << path[j] << '"' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.contigname << ':' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.headindex
+						<< '-' << undigraph.subundigraphs[i].Subconitglist[path[j]].subcontig.tailindex << '"' << "->";
 	}
 	return true;
 }
 bool Ccorrector::findBestNRoute(int n)
 {
+	ofstream correctedfile("longreadcorrected.fa", ios::trunc);
 #pragma omp parallel
 	{
 		std::vector<CMyVectorInt> pdist;
 		std::vector<CMyVectorInt> ppath;
 		int *path = NULL;
 		unsigned long i;
-		string pnum;
-		stringstream ss;
-		ss << omp_get_thread_num();
-		ss >> pnum;
-		string s = "longreadcorrected_" + pnum + ".fa";
-		string s2 = "trimedlongreadedcorrected_" + pnum + ".fa";
-//	string s = "longreadcorrected.fa";
-		ofstream correctedfile(s.c_str(), ios::trunc);
-		ofstream trimedcorrectedfile;//(s2.c_str(), ios::trunc);
+		/*string pnum;
+		 stringstream ss;
+		 ss << omp_get_thread_num();
+		 ss >> pnum;
+		 string s = "longreadcorrected_" + pnum + ".fa";
+		 string s2 = "trimedlongreadedcorrected_" + pnum + ".fa";
+		 ofstream correctedfile(s.c_str(), ios::trunc);
+		 ofstream trimedcorrectedfile; //(s2.c_str(), ios::trunc);*/
+		Cfilebuffer longreadbuffer(lrfilename, buffersize);
+		Cfilebuffer contigbuffer(ctfilename, buffersize);
 #pragma omp for private(path,pdist,ppath)
 		for (i = 0; i < undigraph.subundigraphs.size(); i++)
 		{
 			nfpathbysimilarity(i, n, pdist);
 			bestnrouteofsimilarity(i, n, path, pdist, ppath);
 			int k = leastcostofn(i, ppath);
-			correctedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
+			//correctedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
 			//trimedcorrectedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
-			docorrect(i, k, correctedfile, ppath, trimedcorrectedfile);
+			docorrect(i, k, correctedfile, ppath, longreadbuffer, contigbuffer);
 		}
 	}
-	ofstream uncorrectedfile("longreaduncorrected.fa", ios::trunc);
 	hash_map<string, Clongread, str_hash, str_equal>::iterator hmit;
 	for (hmit = lrhm.begin(); hmit != lrhm.end(); hmit++)
 	{
 		if (!(*hmit).second.corrected)
 		{
-			uncorrectedfile << ">" << (*hmit).first << endl;
-			uncorrectedfile << Realign(GetACut(lrfilename, (*hmit).second.index, 0, (*hmit).second.length - 1)) << endl;
+			correctedfile << ">" << (*hmit).first << endl;
+			if (iteration)
+				correctedfile << Realign(GetACut(lrfilename, (*hmit).second.index, 0, (*hmit).second.length - 1)) << endl;
+			else
+				correctedfile << Realign(lower(GetACut(lrfilename, (*hmit).second.index, 0, (*hmit).second.length - 1))) << endl;
 		}
 	}
 	return true;
 }
 
-string turncapitaltosmall(string raw)
-{
-	string::iterator it;
-	for (it = raw.begin(); it != raw.end(); it++)
-	{
-		(*it) += 32;
-	}
-	return raw;
-}
-
-void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath, std::ofstream &trimedcorrectedfile)
+void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath, Cfilebuffer &longreadbuffer, Cfilebuffer &contigbuffer)
 {
 
 	int i = 0, j = 0;
 	string trimedstr;
 	string correctedstr;
 	string temp;
-	bool flag = false;
 	int subcontigindex = ppath[ppathindex].size() - 2;
 	while (i < lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].length)
 	{
@@ -2374,14 +2456,13 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 		else
 		{
 			j = lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].length - 1;
-			flag = false;
 		}
 		if (j >= i)
 		{
-			correctedstr += turncapitaltosmall(GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j));
-			if (flag)
-				trimedstr += turncapitaltosmall(GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j));
-			flag = true;
+			if (iteration)
+				correctedstr += GetACut2(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j, longreadbuffer);
+			else
+				correctedstr += lower(GetACut2(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j, longreadbuffer));
 		}
 		if (subcontigindex > 0)
 		{
@@ -2389,10 +2470,12 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 			{
 				i = j + 1;
 				j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
-//				string temp2 = GetACut(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j);
-				temp = GetACut(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-						undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex,
-						undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex);
+				temp = upper(
+						GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+								undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex
+										+ undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headoffset,
+								undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex
+										- undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailoffset, contigbuffer));
 				if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.strand == '-')
 				{
 					reverse(temp.begin(), temp.end());
@@ -2407,6 +2490,14 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 							(*it) = 'C';
 						else if ((*it) == 'C')
 							(*it) = 'G';
+						else if ((*it) == 'a')
+							(*it) = 't';
+						else if ((*it) == 't')
+							(*it) = 'a';
+						else if ((*it) == 'g')
+							(*it) = 'c';
+						else if ((*it) == 'c')
+							(*it) = 'g';
 					}
 				}
 				correctedstr += temp;
@@ -2416,8 +2507,12 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 		}
 		i = j + 1;
 	}
-	correctedfile << Realign(correctedstr) << endl;
-	//trimedcorrectedfile << Realign(trimedstr) << endl;
+#pragma omp critical
+	{
+		correctedfile << ">" << undigraph.subundigraphs[subundigraphindex].longreadname << endl;
+		correctedfile << Realign(correctedstr) << endl;
+
+	}
 	lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].corrected = true;
 }
 
@@ -2427,11 +2522,13 @@ int main(int argc, char *argv[])
 	std::ios::sync_with_stdio(false);
 	logfilename = "log.txt";
 	subcontigfilename = "subcontigs.fa";
+	buffersize = 10000000;
 	preprocess = false;
 	preprocess_threshold = 4;
 	bestn = 4;
 	max_support = 0;
 	fixed_max_support = false;
+	iteration = false;
 	if (argc < 3)
 	{
 		cout << "Invalid parameters!" << endl;
@@ -2476,6 +2573,8 @@ int main(int argc, char *argv[])
 	pa.AddArgType('l', "log", ParsingArgs::MAYBE_VALUE); //log filename
 	pa.AddArgType('t', "threads", ParsingArgs::MUST_VALUE);
 	pa.AddArgType('s', "subcontigfile", ParsingArgs::MAYBE_VALUE);
+	pa.AddArgType('b', "buffersize", ParsingArgs::MUST_VALUE);
+	pa.AddArgType('i', "iteration", ParsingArgs::NO_VALUE);
 	std::string errPos;
 	int iRet = pa.Parse(tmpPara, result, errPos);
 	if (0 > iRet)
@@ -2515,7 +2614,7 @@ int main(int argc, char *argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl ;
+					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					return -1;
 				}
@@ -2539,7 +2638,7 @@ int main(int argc, char *argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl ;
+					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					return -1;
 				}
@@ -2572,6 +2671,7 @@ int main(int argc, char *argv[])
 						ss << it->second[0];
 						ss >> logfilename;
 					}
+					printlog = true;
 					cout << "logfile = " << logfilename << endl;
 					logfile.open(logfilename.c_str());
 					if (!logfile.is_open())
@@ -2596,6 +2696,7 @@ int main(int argc, char *argv[])
 						ss << it->second[0];
 						ss >> subcontigfilename;
 					}
+					printsubcontgs = true;
 					cout << "subcontigfile = " << subcontigfilename << endl;
 					subcontigfile.open(subcontigfilename.c_str());
 					if (!subcontigfile.is_open())
@@ -2621,37 +2722,103 @@ int main(int argc, char *argv[])
 					cout << "threads = " << numofthread << endl;
 				}
 			}
-		}
-		/*		if (argflag < 1)
-		 {
-		 cout << "Parameters aren't enough" << iRet << errPos << endl;
-		 return -1;
-		 }*/
-	}
 
+			if (it->first.compare("b") == 0 || it->first.compare("buffersize") == 0)
+			{
+				if (it->second.size() != 1)
+				{
+					cout << "Invalid parameters!" << iRet << errPos << endl;
+					system("cat readme.txt");
+					return -1;
+				}
+				else
+				{
+					std::stringstream ss;
+					ss << it->second[0];
+					ss >> buffersize;
+					cout << "buffersize = " << buffersize << endl;
+				}
+			}
+
+			if (it->first.compare("i") == 0 || it->first.compare("iteration") == 0)
+			{
+				if (it->second.size() > 0)
+				{
+					cout << "Invalid parameters!" << iRet << errPos << endl;
+					system("cat readme.txt");
+					return -1;
+				}
+				else
+				{
+					iteration = true;
+					cout << "iteration = true" << endl;
+				}
+			}
+		}
+	}
+	clock_t start0 = time(NULL);
+	clock_t start = start0;
+	cout << endl << "Making hashmap for long reads..." << endl;
 	HashLongRead(longreadfile);
 	longreadfile.close();
+	clock_t end = time(NULL);
+	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	start = end;
+
+	cout << "Making hashmap for contigs..." << endl;
 	HashContig(contigfile);
 	contigfile.close();
+	end = time(NULL);
+	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	start = end;
+
+	cout << "Reading map result..." << endl;
 	ReadAlign(alignfile);
 	Sort();
+	end = time(NULL);
+	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	start = end;
+
 	ifstream newalignfile;
 	if (preprocess)
 	{
+		cout << "Preprocessing..." << endl;
 		BlasrAdapter adapter(preprocess_threshold, argv[2]);
 		adapter.RunAdapter(alignfile);
 		newalignfile.open("AdaptedBlasrResult.m5");
+		clock_t end = time(NULL);
+		cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+		start = end;
 	}
+
+	cout << "Generating subcontigs..." << endl;
 	GetSubContigs(argv[2]);
+	end = time(NULL);
+	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	start = end;
+
+	cout << "Making graph..." << endl;
 	if (preprocess)
 		CUndigraph::MakeUndigraph(newalignfile);
 	else
 		CUndigraph::MakeUndigraph(alignfile);
 	alignfile.close();
+	end = time(NULL);
+	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	start = end;
+
+	cout << "Correcting long reads..." << endl;
 	Ccorrector corrector(argv[3], argv[2]);
 //	corrector.findBestRouteBySupport();
 	corrector.findBestNRoute(bestn);
+	end = time(NULL);
+	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	start = end;
+
 	cout << "finished!" << endl;
+	end = time(NULL);
+	cout << "total time cost: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
+	start = end;
 	cout << "max_support = " << max_support << endl;
 	system("date");
 	return 0;

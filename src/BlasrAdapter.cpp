@@ -305,6 +305,14 @@ bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 								(*it) = 'C';
 							else if ((*it) == 'C')
 								(*it) = 'G';
+							else if ((*it) == 'a')
+								(*it) = 't';
+							else if ((*it) == 't')
+								(*it) = 'a';
+							else if ((*it) == 'g')
+								(*it) = 'c';
+							else if ((*it) == 'c')
+								(*it) = 'g';
 						}
 						newblasrfile << tempstr;
 					}
@@ -324,6 +332,14 @@ bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 								(*it) = 'C';
 							else if ((*it) == 'C')
 								(*it) = 'G';
+							else if ((*it) == 'a')
+								(*it) = 't';
+							else if ((*it) == 't')
+								(*it) = 'a';
+							else if ((*it) == 'g')
+								(*it) = 'c';
+							else if ((*it) == 'c')
+								(*it) = 'g';
 						}
 						newblasrfile << tempstr;
 					}
@@ -333,7 +349,7 @@ bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 		else if (c == '\n')
 		{
 			blasrfile >> longreadname;
-			if(!blasrfile)
+			if (!blasrfile)
 				break;
 			newblasrfile << longreadname;
 			if (lrhm.find(longreadname) == lrhm.end())
