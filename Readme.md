@@ -1,6 +1,6 @@
-<p><strong>NEWS: We will present our poster on HiBAM in ISMB’16!</strong><br>
+<p>NEWS: We will present our poster on HiBAM in ISMB’16!<br>
 
-<p><strong>Basic usage: ‘HiBAM blasrresult.m5 contigs.fasta longreads.fasta [-options|–options]‘.</strong> <br>
+<p>Basic usage: ‘HiBAM blasrresult.m5 contigs.fasta longreads.fasta [-options|–options]‘.<br>
 Options Description (default value) <br>
 -p/ –preprocess n <br>
     Preprocess will dicrease the memory usage of HiBAM. 4 is recommended. <br>
