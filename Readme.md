@@ -1,4 +1,4 @@
-<h1 id="news-we-will-present-our-poster-on-hibam-in-ismb16"><strong>NEWS: We will present our poster on HiBAM in ISMB’16!</strong></h1>
+<p><strong>NEWS: We will present our poster on HiBAM in ISMB’16!</strong><br>
 
 <p><strong>Basic usage: ‘HiBAM blasrresult.m5 contigs.fasta longreads.fasta [-options|–options]‘.</strong> <br>
 Options Description (default value) <br>

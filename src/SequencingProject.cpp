@@ -117,7 +117,6 @@ int GetBaseNum(ifstream& file, fstream::pos_type head, fstream::pos_type tail)
 	free(s);
 	file.clear();
 	file.seekg(tempindex, ios::beg);
-	fstream::pos_type temp = file.tellg();
 	return res;
 }
 
@@ -135,7 +134,7 @@ void HashLongRead(ifstream& longreadfile)
 	fstream::pos_type headindex;
 	fstream::pos_type tailindex;
 	fstream::pos_type tempindex;
-	unsigned long gcount;
+	streamsize gcount;
 	while (longreadfile.read(s, 1000), longreadfile.gcount() != 0)
 	{
 		gcount = longreadfile.gcount();
@@ -862,7 +861,7 @@ bool CSubUndigraph::clearcontiglist()
 	return true;
 }
 
-int CSubUndigraph::getlrlength(int length)
+int CSubUndigraph::getlrlength(int length, unsigned int& similarity)
 {
 	int p = 0;
 	string::iterator it;
@@ -878,21 +877,37 @@ int CSubUndigraph::getlrlength(int length)
 	if (printlog)
 		logfile << ctalignedseq.substr(ctoffset, length) << endl;
 	ctoffset += length;
-	matchlength = length;
-	string temp = lralignedseq.substr(lroffset, length);
+
+	string temp = matchpattern.substr(matchoffset, length);
+	if (printlog)
+	{
+		logfile << temp << endl;
+	}
+	int count = 0;
+	unsigned long q = 0;
+	while ((q = temp.find('*', q)) != string::npos)
+	{
+		count++;
+		q++;
+	}
+	matchoffset += length;
+	similarity = length - count;
+
+	temp = lralignedseq.substr(lroffset, length);
 	lroffset += length;
 	if (printlog)
 		logfile << temp << endl;
-	unsigned long q = 0;
+	q = 0;
 	while ((q = temp.find('-', q)) != string::npos)
 	{
 		length--;
 		q++;
 	}
+
 	return length;
 }
 
-int CSubUndigraph::getlrlengthreverse(int offset, int length)
+int CSubUndigraph::getlrlengthreverse(int offset, int length, unsigned int& similarity)
 {
 	int p = 0;
 	string::iterator it;
@@ -908,53 +923,33 @@ int CSubUndigraph::getlrlengthreverse(int offset, int length)
 	if (printlog)
 		logfile << ctalignedseq.substr(ctalignedseq.size() - ctoffset - length, length) << endl;
 	ctoffset += length;
-	matchlength = length;
-	string temp = lralignedseq.substr(lralignedseq.size() - lroffset - length, length);
+
+	string temp = matchpattern.substr(matchpattern.size() - matchoffset - length, length);
+	if (printlog)
+		logfile << temp << endl;
+	int count = 0;
+	unsigned long q = 0;
+	while ((q = temp.find('*', q)) != string::npos)
+	{
+		count++;
+		q++;
+	}
+	matchoffset += length;
+	similarity = length - count;
+
+	temp = lralignedseq.substr(lralignedseq.size() - lroffset - length, length);
 	lroffset += length;
 	if (printlog)
 		logfile << temp << endl;
 
-	unsigned long q = 0;
+	q = 0;
 	while ((q = temp.find('-', q)) != string::npos)
 	{
 		length--;
 		q++;
 	}
+
 	return length;
-}
-
-int CSubUndigraph::getSimilarity()
-{
-	string temp = matchpattern.substr(matchoffset, matchlength);
-	if (printlog)
-	{
-		logfile << temp << endl;
-	}
-	int count = 0;
-	unsigned long q = 0;
-	while ((q = temp.find('*', q)) != string::npos)
-	{
-		count++;
-		q++;
-	}
-	matchoffset += matchlength;
-	return matchlength - count;
-}
-
-int CSubUndigraph::getSimilarityreverse()
-{
-	string temp = matchpattern.substr(matchpattern.size() - matchoffset - matchlength, matchlength);
-	if (printlog)
-		logfile << temp << endl;
-	int count = 0;
-	unsigned long q = 0;
-	while ((q = temp.find('*', q)) != string::npos)
-	{
-		count++;
-		q++;
-	}
-	matchoffset += matchlength;
-	return matchlength - count;
 }
 
 bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset, int tailoffset, char strand)
@@ -972,28 +967,27 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 			if ((it == contiglist.back().begin()) && ((it + 1) == contiglist.back().end()))
 			{
 				it->longreadheadindex = lrheadindex;
-				it->longreadtailindex = lrheadindex + getlrlength(it->tailindex - it->headindex - headoffset - tailoffset + 1) - 1;
+				it->longreadtailindex = lrheadindex + getlrlength(it->tailindex - it->headindex - headoffset - tailoffset + 1, it->similarity) - 1;
 				it->headoffset = headoffset;
 				it->tailoffset = tailoffset;
 			}
 			else if (it == contiglist.back().begin())
 			{
 				it->longreadheadindex = lrheadindex;
-				it->longreadtailindex = lrheadindex + getlrlength(it->tailindex - it->headindex - headoffset + 1) - 1;
+				it->longreadtailindex = lrheadindex + getlrlength(it->tailindex - it->headindex - headoffset + 1, it->similarity) - 1;
 				it->headoffset = headoffset;
 			}
 			else if ((it + 1) == contiglist.back().end())
 			{
 				it->longreadheadindex = (it - 1)->longreadtailindex + 1;
-				it->longreadtailindex = (it - 1)->longreadtailindex + getlrlength(it->tailindex - it->headindex - tailoffset + 1);
+				it->longreadtailindex = (it - 1)->longreadtailindex + getlrlength(it->tailindex - it->headindex - tailoffset + 1, it->similarity);
 				it->tailoffset = tailoffset;
 			}
 			else
 			{
 				it->longreadheadindex = (it - 1)->longreadtailindex + 1;
-				it->longreadtailindex = (it - 1)->longreadtailindex + getlrlength(it->tailindex - it->headindex + 1);
+				it->longreadtailindex = (it - 1)->longreadtailindex + getlrlength(it->tailindex - it->headindex + 1, it->similarity);
 			}
-			it->similarity = getSimilarity();
 			if (it->longreadtailindex < it->longreadheadindex)
 			{
 				contiglist.back().erase(it);
@@ -1009,7 +1003,7 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 			{
 				it->longreadtailindex = lrtailindex;
 				length = it->tailindex - it->headindex - tailoffset - headoffset + 1;
-				it->longreadheadindex = lrtailindex - getlrlengthreverse(ctalignedseq.size() - length - 1, length) + 1;
+				it->longreadheadindex = lrtailindex - getlrlengthreverse(ctalignedseq.size() - length - 1, length, it->similarity) + 1;
 				it->tailoffset = tailoffset;
 				it->headoffset = headoffset;
 			}
@@ -1017,23 +1011,23 @@ bool CSubUndigraph::getAlignInf(int lrheadindex, int lrtailindex, int headoffset
 			{
 				it->longreadtailindex = lrtailindex;
 				length = it->tailindex - it->headindex - tailoffset + 1;
-				it->longreadheadindex = lrtailindex - getlrlengthreverse(ctalignedseq.size() - length - 1, length) + 1;
+				it->longreadheadindex = lrtailindex - getlrlengthreverse(ctalignedseq.size() - length - 1, length, it->similarity) + 1;
 				it->tailoffset = tailoffset;
 			}
 			else if ((it + 1) == contiglist.back().end())
 			{
 				it->longreadtailindex = (it - 1)->longreadheadindex - 1;
 				length = it->tailindex - it->headindex - headoffset + 1;
-				it->longreadheadindex = (it - 1)->longreadheadindex - getlrlengthreverse(ctoffset, length);
+				it->longreadheadindex = (it - 1)->longreadheadindex - getlrlengthreverse(ctoffset, length, it->similarity);
 				it->headoffset = headoffset;
 			}
 			else
 			{
 				it->longreadtailindex = (it - 1)->longreadheadindex - 1;
 				length = it->tailindex - it->headindex + 1;
-				it->longreadheadindex = (it - 1)->longreadheadindex - getlrlengthreverse(ctoffset, length);
+				it->longreadheadindex = (it - 1)->longreadheadindex - getlrlengthreverse(ctoffset, length, it->similarity);
 			}
-			it->similarity = getSimilarityreverse();
+
 			if (it->longreadtailindex < it->longreadheadindex)
 			{
 				contiglist.back().erase(it);
