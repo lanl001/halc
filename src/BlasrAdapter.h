@@ -20,8 +20,10 @@ class BlasrAdapter
 private:
 	int mythreshold;
 	char * contigfilename;
+	std::string outputpath;
+	std::string prefix;
 public:
-	BlasrAdapter(int threshold , char * contigfile);
+	BlasrAdapter(int threshold , char * contigfile, std::string outpath);
 	bool RunAdapter(std::ifstream &infile);
 	bool ChangeCutPoints();
 	bool ChangeCutPointsReverse();

@@ -17,8 +17,8 @@ extern vector<Ccutpoint> cutpoints;
 extern void Sort();
 extern string GetACut(char *argv, fstream::pos_type position, int begin, int end);
 
-BlasrAdapter::BlasrAdapter(int threshold, char * contigfile) :
-		mythreshold(threshold), contigfilename(contigfile)
+BlasrAdapter::BlasrAdapter(int threshold, char * contigfile, string outpath) :
+		mythreshold(threshold), contigfilename(contigfile),outputpath(outpath)
 {
 }
 
@@ -103,10 +103,10 @@ bool BlasrAdapter::ChangeCutPointsReverse()
 bool BlasrAdapter::GetNewBlasrFile(std::ifstream &blasrfile)
 {
 	ofstream newblasrfile;
-	newblasrfile.open("AdaptedBlasrResult.m5");
+	newblasrfile.open((outputpath).c_str());
 	if (!newblasrfile.is_open())
 	{
-		cout << "AdaptedBlasrResult.m5";
+		cout << "Fail to create AdaptedBlasrResult.m5";
 		return false;
 	}
 	blasrfile.clear();

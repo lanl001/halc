@@ -28,6 +28,9 @@ struct Nspasenode
 {
 	int longreadheadindex;
 	int longreadtailindex;
+	int contigheadindex;
+	int contigtailindex;
+	Nspasenode():longreadheadindex(0),longreadtailindex(0),contigheadindex(0),contigtailindex(0){}
 };
 
 class CSubcontig
@@ -43,11 +46,11 @@ public:
 	int headoffset;
 	int tailoffset;
 	unsigned long indexofsubcontigs;
-	std::list<Nspasenode>* Nspace;
+//	std::vector<Nspasenode>* Nspace;
 
 	bool operator==(const CSubcontig& obj) const;
 	CSubcontig() :
-			headoffset(0), tailoffset(0), Nspace(NULL)
+			headoffset(0), tailoffset(0)//, Nspace(NULL)
 	{
 	}
 };
@@ -174,17 +177,20 @@ private:
 	int lroffset;
 //	int matchlength;
 	int matchoffset;
+	int numoflines(std::string& s,int begin,int end);
+	int cutlongread(int length,CSubcontig& subcontig);
+	int cutlongreadreverse(int length,CSubcontig& subcontig);
 	//vector<CSubcontig> badcontigs;
 public:
 	CSubUndigraph();
 
-	bool addToContigList(unsigned long head, unsigned long tail, char strand, int lrheadindex, int lrtailindex, int headoffset, int tailoffset);
+	bool addToContigList(unsigned long head, unsigned long tail, char strand, int lrheadindex, int lrtailindex, int headoffset, int tailoffset,int ctheadindex,int cttailindex);
 
 	static bool clearcontiglist();
 
 	int getlrlength(int length, unsigned int& similarity);
 
-	int getlrlengthreverse(int offset, int length, unsigned int& similarity);
+	int getlrlengthreverse(int length, unsigned int& similarity);
 
 	bool getAlignInf(int lrheadindex, int lrtailindex, int headoffset, int tailoffset, char strand);
 
@@ -234,6 +240,7 @@ private:
 	void nfroutebysimilarity2(int index, int* counter, int j, int pathposition, int jposition, int *&path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
 	void bestnrouteofsimilarity(int index, int n, int *path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
 	int leastcostofn(int index, std::vector<CMyVectorInt> &path);
+	std::string& changetoreverse(std::string& s);
 public:
 	Ccorrector(char* lrfile, char* ctfile);
 	bool findBestRouteBySimilarity();
