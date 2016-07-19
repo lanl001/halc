@@ -46,8 +46,9 @@ bool removeN;
 vector<Ccutpoint> cutpoints;
 vector<CSubcontig> subcontigs;
 int numofthread;
-string outputpath = "./";
-string prefix = "HiBAM";
+string outputpath;
+string prefix;
+bool repeatfree = false;
 
 namespace __gnu_cxx
 {
@@ -2233,7 +2234,7 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 				if (result != pdist[j].end())
 				{
 					(*counter)--;
-					nfroutebysimilarity2(index, counter, j, pathposition, result - pdist[j].begin(), path, pdist, ppath);
+					nfroutebysimilarity(index, counter, j, pathposition, result - pdist[j].begin(), path, pdist, ppath);
 					if (*counter == 0)
 						break;
 				}
@@ -2253,7 +2254,7 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 	delete[] path;
 	path = NULL;
 }
-void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathposition, int jposition, int *&path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath)
+void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathposition, int jposition, int *&path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath)
 {
 	path[pathposition++] = j;
 	int i = j;
@@ -2324,7 +2325,7 @@ void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathpo
 				if (result != pdist[j].end())
 				{
 					(*counter)--;
-					nfroutebysimilarity2(index, counter, j, pathposition, result - pdist[j].begin(), path, pdist, ppath);
+					nfroutebysimilarity(index, counter, j, pathposition, result - pdist[j].begin(), path, pdist, ppath);
 					if (*counter == 0)
 						break;
 				}
@@ -2343,129 +2344,16 @@ void Ccorrector::nfroutebysimilarity2(int index, int* counter, int j, int pathpo
 	}
 }
 
-void Ccorrector::nfroutebysimilarity(int index, int n, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath)
-{
-	ppath.clear();
-	int tempbiggest;
-	int counter = 0;
-	unsigned long subcontiglistsize = undigraph.subundigraphs[index].Subconitglist.size();
-	for (int i = 0; i < n; i++)
-	{
-		CMyVectorInt line;
-		line.push_back(subcontiglistsize - 1);
-		ppath.push_back(line);
-	}
-	vector<CMyVectorInt>::iterator it;
-	for (it = ppath.begin(); it != ppath.end(); it++)
-	{
-		int i = subcontiglistsize - 1;
-		int distji;
-		int b;
-		int temp;
-		bool ispositive;
-		bool c;
-		int biggest = pdist[i].getnext();
-		if (biggest == tempbiggest)
-			counter++;
-		else
-			counter = 0;
-		tempbiggest = biggest;
-		while (i > 0)
-		{
-			int tempj;
-			int tempbiggest;
-			int tempcounter = counter;
-			int j;
-			for (j = i - 1; j >= 0; j--)
-			{
-				char jstrand = undigraph.subundigraphs[index].Subconitglist[j].subcontig.strand;
-				char istrand = undigraph.subundigraphs[index].Subconitglist[i].subcontig.strand;
-				unsigned long jindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[j].subcontig.indexofsubcontigs;
-				unsigned long iindexofsubcontig = undigraph.subundigraphs[index].Subconitglist[i].subcontig.indexofsubcontigs;
-				if ((jstrand == '+') && (istrand == '+'))
-				{
-					temp = 0;
-					ispositive = true;
-				}
-				else if ((jstrand == '-') && (istrand == '-'))
-				{
-					temp = 0;
-					ispositive = false;
-				}
-				else if ((jindexofsubcontig <= iindexofsubcontig) && (jstrand == '+' && istrand == '-'))
-				{
-					temp = 1;
-					ispositive = true;
-				}
-				else if ((jindexofsubcontig > iindexofsubcontig) && (jstrand == '+' && istrand == '-'))
-				{
-					temp = 1;
-					ispositive = false;
-				}
-				else if ((jindexofsubcontig <= iindexofsubcontig) && (jstrand == '-' && istrand == '+'))
-				{
-					temp = 2;
-					ispositive = true;
-				}
-				else if ((jindexofsubcontig > iindexofsubcontig) && (jstrand == '-' && istrand == '+'))
-				{
-					temp = 2;
-					ispositive = false;
-				}
-				if (ispositive)
-				{
-					if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
-						c = true;
-					else
-						c = false;
-				}
-				else
-				{
-					if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
-						c = true;
-					else
-						c = false;
-				}
-				if (c)
-				{
-					distji = undigraph.subundigraphs[index].Subconitglist[j].subcontig.similarity;
-					b = biggest - distji;
-					CMyVectorInt::iterator result = find(pdist[j].begin(), pdist[j].end(), b);
-					if (result != pdist[j].end())
-					{
-						if (tempcounter > 0)
-						{
-							tempj = j;
-							tempbiggest = (*result);
-							tempcounter--;
-							continue;
-						}
-						biggest = (*result);
-						it->push_back(j);
-						i = j;
-						break;
-					}
-				}
-			}
-			if (j == -1)
-			{
-				biggest = tempbiggest;
-				it->push_back(tempj);
-				i = tempj;
-			}
-		}
-	}
-}
-int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath)
+int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath, bool &hasreapeat)
 {
 	int temp;
 	bool ispositive;
-	vector<int> sum;
+	vector<pair<int, bool> > sum;
 	int consume;
 	vector<CMyVectorInt>::iterator it;
 	for (it = ppath.begin(); it != ppath.end(); it++)
 	{
-		sum.push_back(0);
+		sum.push_back(pair<int, bool>(0, false));
 		CMyVectorInt::iterator it2;
 		for (it2 = it->end() - 1; it2 >= it->begin(); it2--)
 		{
@@ -2515,21 +2403,30 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath)
 				{
 					consume = 0;
 				}
-				sum.back() += consume;
+				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= max_support / 10)
+				{
+					sum.back().second = true;
+				}
+				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= max_support / 10)
+				{
+					sum.back().second = true;
+				}
+				sum.back().first += consume;
 			}
 		}
 	}
 	int r = 0;
-	int tempsum = sum[0];
-	vector<int>::iterator it3;
+	int tempsum = sum[0].first;
+	vector<pair<int, bool> >::iterator it3;
 	for (it3 = sum.begin() + 1; it3 != sum.end(); it3++)
 	{
-		if ((*it3) < tempsum)
+		if (it3->first < tempsum)
 		{
-			tempsum = (*it3);
+			tempsum = it3->first;
 			r = it3 - sum.begin();
 		}
 	}
+	hasreapeat = sum[r].second;
 	return r;
 }
 Ccorrector::Ccorrector(char* lrfile, char* ctfile) :
@@ -2592,14 +2489,25 @@ bool Ccorrector::findBestNRoute(int n)
 		if (mkdir(outputpath.c_str(), 0755) < 0)
 		{
 			printf("mkdir=%s:msg=%s\n", outputpath.c_str(), strerror(errno));
-			return -1;
+			exit(-1);
 		}
 	}
-	ofstream correctedfile((outputpath + '/'+ prefix + ".corrected.fa").c_str(), ios::trunc);
+	ofstream correctedfile((outputpath + '/' + prefix + ".corrected.fa").c_str(), ios::trunc);
 	if (!correctedfile.is_open())
 	{
-		cout << "file to create longreadcorrected.fa" << endl;
+		cout << "file to create corrected file" << endl;
 		exit(-1);
+	}
+
+	ofstream repeatfile;
+	if (repeatfree)
+	{
+		repeatfile.open((outputpath + '/' + prefix + ".repreatused.fa").c_str(), ios::trunc);
+		if (!repeatfile.is_open())
+		{
+			cout << "file to create repeat file" << endl;
+			exit(-1);
+		}
 	}
 #pragma omp parallel
 	{
@@ -2617,15 +2525,16 @@ bool Ccorrector::findBestNRoute(int n)
 		 ofstream trimedcorrectedfile; //(s2.c_str(), ios::trunc);*/
 		Cfilebuffer longreadbuffer(lrfilename, buffersize);
 		Cfilebuffer contigbuffer(ctfilename, buffersize);
+		bool hasrepeat = false;
 #pragma omp for private(path,pdist,ppath)
 		for (i = 0; i < undigraph.subundigraphs.size(); i++)
 		{
 			nfpathbysimilarity(i, n, pdist);
 			bestnrouteofsimilarity(i, n, path, pdist, ppath);
-			int k = leastcostofn(i, ppath);
+			int k = leastcostofn(i, ppath, hasrepeat);
 			//correctedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
 			//trimedcorrectedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
-			docorrect(i, k, correctedfile, ppath, longreadbuffer, contigbuffer);
+			docorrect(i, k, correctedfile, repeatfile, ppath, longreadbuffer, contigbuffer, hasrepeat);
 		}
 //		cout << "longreadhitratio = "<< longreadbuffer.hitraio()<<endl;
 //		cout << "contighitratio = "<< contigbuffer.hitraio()<<endl;
@@ -2671,7 +2580,8 @@ string& Ccorrector::changetoreverse(string& s)
 	return s;
 }
 
-void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, std::vector<CMyVectorInt> &ppath, Cfilebuffer &longreadbuffer, Cfilebuffer &contigbuffer)
+void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &correctedfile, ofstream &repeatfile, std::vector<CMyVectorInt> &ppath, Cfilebuffer &longreadbuffer,
+		Cfilebuffer &contigbuffer, bool &hasrepeat)
 {
 
 	int i = 0, j = 0;
@@ -2813,46 +2723,23 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 	}
 #pragma omp critical
 	{
-		correctedfile << ">" << undigraph.subundigraphs[subundigraphindex].longreadname << endl;
-		correctedfile << Realign(correctedstr) << endl;
+		if (hasrepeat && repeatfree)
+		{
+			repeatfile << ">" << undigraph.subundigraphs[subundigraphindex].longreadname << endl;
+			repeatfile << Realign(correctedstr) << endl;
+		}
+		else
+		{
+			correctedfile << ">" << undigraph.subundigraphs[subundigraphindex].longreadname << endl;
+			correctedfile << Realign(correctedstr) << endl;
+		}
 
 	}
 	lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].corrected = true;
 }
 
-int main(int argc, char *argv[])
+void parameterAnalyzer(int argc, char* argv[])
 {
-	system("date");
-	std::ios::sync_with_stdio(false);
-	logfilename = "log.txt";
-	subcontigfilename = "subcontigs.fa";
-	buffersize = 10000000;
-	preprocess = false;
-	preprocess_threshold = 4;
-	bestn = 4;
-	max_support = 0;
-	fixed_max_support = false;
-	iteration = false;
-	removeN = false;
-	if (argc < 3)
-	{
-		cout << "Invalid parameters!" << endl;
-		system("cat readme.txt");
-		return -1;
-	}
-	ifstream alignfile, contigfile, longreadfile;
-	alignfile.open(argv[1]);
-	contigfile.open(argv[2]);
-	longreadfile.open(argv[3]);
-	if (!alignfile.is_open() || !contigfile.is_open() || !longreadfile.is_open())
-	{
-		cout << "File dose not exist!" << endl;
-		alignfile.close();
-		contigfile.close();
-		longreadfile.close();
-		return -1;
-	}
-
 	/*
 	 * parameter analyzing
 	 */
@@ -2883,13 +2770,14 @@ int main(int argc, char *argv[])
 	pa.AddArgType('r', "romoveN", ParsingArgs::NO_VALUE);
 	pa.AddArgType('o', "out", ParsingArgs::MUST_VALUE);
 	pa.AddArgType('f', "prefix", ParsingArgs::MUST_VALUE);
+	pa.AddArgType('x', "repeatfree", ParsingArgs::NO_VALUE);
 	std::string errPos;
 	int iRet = pa.Parse(tmpPara, result, errPos);
 	if (0 > iRet)
 	{
 		cout << "Invalid parameters!" << endl << iRet << errPos << endl;
 		system("cat readme.txt");
-		return -1;
+		exit(-1);
 	}
 	else
 	{
@@ -2903,7 +2791,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -2924,7 +2812,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -2948,7 +2836,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -2968,7 +2856,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -2993,7 +2881,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -3018,7 +2906,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -3037,7 +2925,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -3054,7 +2942,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -3069,7 +2957,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -3084,7 +2972,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -3099,7 +2987,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
-					return -1;
+					exit(-1);
 				}
 				else
 				{
@@ -3107,8 +2995,64 @@ int main(int argc, char *argv[])
 					cout << "prefix = " << prefix << endl;
 				}
 			}
+
+			if (it->first.compare("x") == 0 || it->first.compare("repeatfree") == 0)
+			{
+				if (it->second.size() > 0)
+				{
+					cout << "Invalid parameters!" << iRet << errPos << endl;
+					system("cat readme.txt");
+					exit(-1);
+				}
+				else
+				{
+					repeatfree = true;
+					cout << "repeatfree = true" << endl;
+				}
+			}
 		}
 	}
+}
+
+int main(int argc, char *argv[])
+{
+	system("date");
+	std::ios::sync_with_stdio(false);
+	logfilename = "log.txt";
+	subcontigfilename = "subcontigs.fa";
+	buffersize = 10000000;
+	preprocess = false;
+	preprocess_threshold = 4;
+	bestn = 4;
+	max_support = 0;
+	fixed_max_support = false;
+	iteration = false;
+	removeN = false;
+	repeatfree = false;
+	outputpath = "./";
+	prefix = "HiBAM";
+
+	if (argc < 3)
+	{
+		cout << "Invalid parameters!" << endl;
+		system("cat readme.txt");
+		return -1;
+	}
+	ifstream alignfile, contigfile, longreadfile;
+	alignfile.open(argv[1]);
+	contigfile.open(argv[2]);
+	longreadfile.open(argv[3]);
+	if (!alignfile.is_open() || !contigfile.is_open() || !longreadfile.is_open())
+	{
+		cout << "File dose not exist!" << endl;
+		alignfile.close();
+		contigfile.close();
+		longreadfile.close();
+		return -1;
+	}
+
+	parameterAnalyzer(argc, argv);
+
 	clock_t start0 = time(NULL);
 	clock_t start = start0;
 	cout << endl << "Making hashmap for long reads..." << endl;
@@ -3144,9 +3088,9 @@ int main(int argc, char *argv[])
 				return -1;
 			}
 		}
-		BlasrAdapter adapter(preprocess_threshold, argv[2], (outputpath + '/'+prefix+"AdaptedBlasrResult.m5").c_str());
+		BlasrAdapter adapter(preprocess_threshold, argv[2], (outputpath + '/' + prefix + "AdaptedBlasrResult.m5").c_str());
 		adapter.RunAdapter(alignfile);
-		newalignfile.open((outputpath + '/'+prefix+"AdaptedBlasrResult.m5").c_str());
+		newalignfile.open((outputpath + '/' + prefix + "AdaptedBlasrResult.m5").c_str());
 		if (!newalignfile.is_open())
 		{
 			cout << "fail to read adapted m5 file" << endl;

@@ -236,16 +236,15 @@ private:
 	bool nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> &pdist);
 	int froutebysupport(int index, int *&dist, int *&path);
 	int froutebysimilarity(int index, int *&dist, int *&path);
-	void nfroutebysimilarity(int index, int n, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
-	void nfroutebysimilarity2(int index, int* counter, int j, int pathposition, int jposition, int *&path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
+	void nfroutebysimilarity(int index, int* counter, int j, int pathposition, int jposition, int *&path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
 	void bestnrouteofsimilarity(int index, int n, int *path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
-	int leastcostofn(int index, std::vector<CMyVectorInt> &path);
+	int leastcostofn(int index, std::vector<CMyVectorInt> &path,bool &hasrepeat);
 	std::string& changetoreverse(std::string& s);
 public:
 	Ccorrector(char* lrfile, char* ctfile);
 	bool findBestRouteBySimilarity();
 	bool findBestRouteBySupport();
 	bool findBestNRoute(int n);
-	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile, std::vector<CMyVectorInt> &ppath, Cfilebuffer &longreadbuffer, Cfilebuffer &contigbuffer);
+	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile,std::ofstream &repeatfile, std::vector<CMyVectorInt> &ppath, Cfilebuffer &longreadbuffer, Cfilebuffer &contigbuffer, bool & hasrepeat);
 };
 #endif /* SEQUENCINGPROJECT_H_ */
