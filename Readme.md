@@ -1,3 +1,4 @@
+<p>NEWS(07/02/16): We submitted our manuscript to Bioinformatics for peer review!<br>
 <p>NEWS(05/11/16): We will present our poster on HiBAM in ISMB’16!<br>
 
 <p>Basic usage: ‘HiBAM blasrresult.m5 contigs.fasta longreads.fasta [-options|–options]‘.<br>
