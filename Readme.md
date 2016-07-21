@@ -1,20 +1,66 @@
-<p>NEWS(07/02/16): We submitted our manuscript to Bioinformatics for peer review!<br>
-<p>NEWS(05/11/16): We will present our poster on HiBAM in ISMB’16!<br>
+##### Contents
+[LATEST NEWS] (#news)  
+[Overview] (#overview)  
+[Copy right] (#copyright)  
+[Short Manual] (#manual)  
 
-<p>Basic usage: ‘HiBAM blasrresult.m5 contigs.fasta longreads.fasta [-options|–options]‘.<br>
-Options Description (default value) <br>
--p/ –preprocess n <br>
-    Preprocess will dicrease the memory usage of HiBAM. 4 is recommended. <br>
--m/ –maxSuppot n <br>
-    Max support is used to limit the maximum support number of a single edge of the graph. <br>
-    If you don’t set the maxSupport number.HiBAM will automatically deside how big it is. <br>
--n/ –bestn n (4) <br>
-    Find the best n route of each longread which have most similarity. <br>
--l/ –log filename <br>
-    Print logfile will cost a lot of time. It is recommended not to use this arg. <br>
--t/ –threads n <br>
-    How many threads does HiBAM use. It will not effect the qaulity of HiBAM, but too many <br>
-    threads will dicrease the efficiency.If this arg is not seted.OpenMP will deside use  <br>
-    howmany threads itself. <br>
--s/ –subcontigfile filename  <br>
-    It is recommended not to use this arg.</p>
+<a name="news"/>
+### LATEST NEWS
+The HiBAM manuscript has been submitted to Bioinformatics!
+
+<a name="overview"/>
+### Overview
+HiBAM is a software that makes error correction for long reads with high base maintenance ratio.
+
+<a name="copyright"/>
+###Copy right
+HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic-2.0).
+
+<a name="manual"/>
+### Short manual
+1. System requirements
+
+   HiBAM is suitable for 32-bit or 64-bit machines with Linux operating systems. At least 4GB of system memory is recommended for correcting larger data sets.
+
+2. Installation
+
+   Aligner [BLASR](https://github.com/PacificBiosciences/blasr) and error correction software [LoRDEC](http://www.atgc-montpellier.fr/lordec/) (only for -ordinary mode) are required to run HiBAM.  
+   * To use BLASR and LoRDEC, put them to your $PATH: `export PATH=PATH2BLASR:$PATH` and `export PATH=PATH2LoRDEC:$PATH`.
+   * The downloaded source files ???, ???, and ??? can be compiled with command `???`.
+
+3. Inputs
+   * Long reads in FASTA format.
+   * Contigs assembled from the corresponding short reads in FASTA format.
+   * The initial short reads in FASTA format (only for -ordinary mode).
+
+4. Using AlignGraph
+
+   ```
+   HiBAM.py long_reads.fa contigs.fa [-options|-options]
+   ```
+
+   Options (default value):
+   -o/-ordinary short_reads.fa (yes)
+   Ordinary mode utilizing repeats to make correction. The error correction software LoRDEC and the initial short reads are required to refine the repeat corrected regions. It is exclusive with the -repeat-free option.
+   -r/-repeat-free (no)
+   Repeat-free mode without utilizing repeats to make correction. It is exclusive with the -ordinary option.
+   -b/-boundary n (4)
+   Maximum boundary difference to split the subcontigs.  
+   -a/-accurate (yes)
+   Accurate construction of the contig graph.
+   -c/-coverage n (auto)
+   Expected long read coverage. If not specified, it can be automatically calculated.
+   -w/-width n (4)
+   Maximum width of the dynamic programming table.
+   -p/-processes n (?)
+   Number of MPI processes to create.
+   -t/-threads n (?)
+   Number of threads for one process to create.
+   -l/-log (no)
+   System log to print.
+   
+5. Outputs
+   * Error corrected full long reads.
+   * Error corrected trimmed long reads.
+   * Error corrected split long reads.
+
