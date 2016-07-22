@@ -26,7 +26,7 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
 
    Aligner [BLASR](https://github.com/PacificBiosciences/blasr) and error correction software [LoRDEC](http://www.atgc-montpellier.fr/lordec/) (only for -ordinary mode) are required to run HiBAM.  
    * To use BLASR and LoRDEC, put them to your $PATH: `export PATH=PATH2BLASR:$PATH` and `export PATH=PATH2LoRDEC:$PATH`.
-   * The downloaded source files ???, ???, and ??? can be compiled with command `???`.
+   * The downloaded source files in src 'src' folder can be compiled with command `g++ -fopenmp HiBAM.cpp BlasrAdapter.cpp parsingargs.cpp -o HiBAM`.
 
 3. Inputs
    * Long reads in FASTA format.
@@ -39,24 +39,24 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
    HiBAM.py long_reads.fa contigs.fa [-options|-options]
    ```
 
-   <p>Options (default value):<br>
-   -o/-ordinary short_reads.fa (yes)<br>
-   Ordinary mode utilizing repeats to make correction. The error correction software LoRDEC and the initial short reads are required to refine the repeat corrected regions. It is exclusive with the -repeat-free option.<br>
-   -r/-repeat-free (no)<br>
-   Repeat-free mode without utilizing repeats to make correction. It is exclusive with the -ordinary option.<br>
-   -b/-boundary n (4)<br>
-   Maximum boundary difference to split the subcontigs.<br>  
-   -a/-accurate (yes)<br>
-   Accurate construction of the contig graph.<br>
-   -c/-coverage n (auto)<br>
-   Expected long read coverage. If not specified, it can be automatically calculated.<br>
-   -w/-width n (4)<br>
-   Maximum width of the dynamic programming table.<br>
-   -p/-processes n (?)<br>
-   Number of MPI processes to create.<br>
-   -t/-threads n (?)<br>
-   Number of threads for one process to create.<br>
-   -l/-log (no)<br>
+   <p>Options (default value):<>
+   -o/-ordinary short_reads.fa (yes)
+   Ordinary mode utilizing repeats to make correction. The error correction software LoRDEC and the initial short reads are required to refine the repeat corrected regions. It is exclusive with the -repeat-free option.
+   -r/-repeat-free (no)
+   Repeat-free mode without utilizing repeats to make correction. It is exclusive with the -ordinary option.
+   -b/-boundary n (4)
+   Maximum boundary difference to split the subcontigs.  
+   -a/-accurate (yes)
+   Accurate construction of the contig graph.
+   -c/-coverage n (auto)
+   Expected long read coverage. If not specified, it can be automatically calculated.
+   -w/-width n (4)
+   Maximum width of the dynamic programming table.
+   -p/-processes n (1)
+   Number of processes to create.
+   -t/-threads n (auto)
+   Number of threads for one process to create.
+   -l/-log (no)
    System log to print.</p>
    
 5. Outputs
