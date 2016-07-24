@@ -52,10 +52,8 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
    Expected long read coverage. If not specified, it can be automatically calculated.<br>
    -w/-width n (4)<br>
    Maximum width of the dynamic programming table.<br>
-   -p/-processes n (1)<br>
-   Number of processes to create.<br>
    -t/-threads n (auto)<br>
-   Number of threads for one process to create.<br>
+   Number of threads for one process to create.It is automatically set to the number of computing cores<br>
    -l/-log (no)<br>
    System log to print.</p>
    
