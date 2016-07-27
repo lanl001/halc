@@ -2768,9 +2768,9 @@ void parameterAnalyzer(int argc, char* argv[])
 	pa.AddArgType('b', "buffersize", ParsingArgs::MUST_VALUE);
 	pa.AddArgType('i', "iteration", ParsingArgs::NO_VALUE);
 	pa.AddArgType('r', "romoveN", ParsingArgs::NO_VALUE);
-//	pa.AddArgType('o', "out", ParsingArgs::MUST_VALUE);
+	pa.AddArgType('o', "out", ParsingArgs::MUST_VALUE);
 	pa.AddArgType('f', "prefix", ParsingArgs::MUST_VALUE);
-	pa.AddArgType('o', "ordinary", ParsingArgs::NO_VALUE);
+	pa.AddArgType('x', "repeatfree", ParsingArgs::NO_VALUE);
 	std::string errPos;
 	int iRet = pa.Parse(tmpPara, result, errPos);
 	if (0 > iRet)
@@ -2966,7 +2966,7 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 			}
 
-/*			if (it->first.compare("o") == 0 || it->first.compare("out") == 0)
+			if (it->first.compare("o") == 0 || it->first.compare("out") == 0)
 			{
 				if (it->second.size() != 1)
 				{
@@ -2979,7 +2979,7 @@ void parameterAnalyzer(int argc, char* argv[])
 					outputpath = it->second[0];
 					cerr << "out = " << outputpath << endl;
 				}
-			}*/
+			}
 
 			if (it->first.compare("f") == 0 || it->first.compare("prefix") == 0)
 			{
@@ -2996,7 +2996,7 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 			}
 
-			if (it->first.compare("o") == 0 || it->first.compare("ordinary") == 0)
+			if (it->first.compare("x") == 0 || it->first.compare("repeatfree") == 0)
 			{
 				if (it->second.size() > 0)
 				{
@@ -3006,8 +3006,8 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 				else
 				{
-					repeatfree = false;
-					cerr << "ordinarymode = true" << endl;
+					repeatfree = true;
+					cerr << " repeatfree = true" << endl;
 				}
 			}
 		}
@@ -3028,7 +3028,7 @@ int main(int argc, char *argv[])
 	fixed_max_support = false;
 	iteration = false;
 	removeN = false;
-	repeatfree = true;
+	repeatfree = false;
 	outputpath = "./";
 	prefix = "HiBAM";
 
