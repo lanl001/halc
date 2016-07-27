@@ -48,7 +48,7 @@ vector<CSubcontig> subcontigs;
 int numofthread;
 string outputpath;
 string prefix;
-bool repeatfree = false;
+bool repeatfree;
 
 namespace __gnu_cxx
 {
@@ -216,7 +216,7 @@ void HashLongRead(ifstream& longreadfile)
 			}
 			if ((temp2 = ss.find('\n', temp1)) != string::npos)
 			{
-//				cout<<longreadfile.tellg()<<" "<<gcount<<endl;
+//				cerr<<longreadfile.tellg()<<" "<<gcount<<endl;
 				position = (longreadfile.tellg() - gcount + 1 + temp2);
 				headindex = position;
 				lrhm[longreadname].index = position;
@@ -286,7 +286,7 @@ void ReadAlign(ifstream& alignfile)
 				alignfile >> longreadstrand;
 				if (longreadstrand == '-')
 				{
-					cout << "ERROR:THIS SOFTWARE DOSE NOT SUPPORT LONGREAD WITH '-' STRAND" << endl;
+					cerr << "ERROR:THIS SOFTWARE DOSE NOT SUPPORT LONGREAD WITH '-' STRAND" << endl;
 					exit(-1);
 				}
 			}
@@ -507,7 +507,7 @@ string GetACut(char *argv, fstream::pos_type position, int begin, int end)
 			break;
 	}
 	contigfile.close();
-//	cout << res << endl;
+//	cerr << res << endl;
 	return res;
 }
 
@@ -588,12 +588,12 @@ string Cfilebuffer::Getstring(char *argv, fstream::pos_type begin, fstream::pos_
 		{
 #pragma omp critical
 			{
-				cout << omp_get_thread_num() << "ERROR: Cfilebuffer: Can not read file at pos: " << begin << endl;
+				cerr << omp_get_thread_num() << "ERROR: Cfilebuffer: Can not read file at pos: " << begin << endl;
 				file.clear();
 				file.seekg(0, ios::end);
 				streampos p = file.tellg();
 				file.close();
-				cout << "file size =" << p << endl;
+				cerr << "file size =" << p << endl;
 				exit(-1);
 			}
 			string nullstring;
@@ -857,7 +857,7 @@ bool CSubUndigraph::addToContigList(unsigned long head, unsigned long tail, char
 	matchoffset = 0;
 	if (subcontigs[head].headindex > ctheadindex)
 	{
-		cout << subcontigs[head].headindex - ctheadindex << endl;
+		cerr << subcontigs[head].headindex - ctheadindex << endl;
 		ctoffset += subcontigs[head].headindex - ctheadindex;
 		lroffset += subcontigs[head].headindex - ctheadindex;
 		matchoffset += subcontigs[head].headindex - ctheadindex;
@@ -1346,7 +1346,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
 		{
 			CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
-//			cout<<CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)]<<endl;
+//			cerr<<CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)]<<endl;
 		}
 		else
 		{
@@ -1354,7 +1354,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			{
 				if (fixed_max_support)
 				{
-					cout << "warning:reached max_support" << endl;
+					cerr << "warning:reached max_support" << endl;
 					--CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
@@ -1365,7 +1365,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			if (CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
-				cout << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
+				cerr << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
 						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
@@ -1383,7 +1383,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			{
 				if (fixed_max_support)
 				{
-					cout << "warning:reached max_support" << endl;
+					cerr << "warning:reached max_support" << endl;
 					--CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
@@ -1394,7 +1394,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			if (CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
-				cout << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
+				cerr << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
 						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
@@ -1413,7 +1413,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			{
 				if (fixed_max_support)
 				{
-					cout << "warning:reached max_support" << endl;
+					cerr << "warning:reached max_support" << endl;
 					--CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
@@ -1424,7 +1424,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			if (CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
-				cout << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
+				cerr << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
 						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
@@ -1442,7 +1442,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			{
 				if (fixed_max_support)
 				{
-					cout << "warning:reached max_support" << endl;
+					cerr << "warning:reached max_support" << endl;
 					--CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
@@ -1453,7 +1453,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			if (CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
-				cout << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
+				cerr << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
 						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
@@ -1471,7 +1471,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			{
 				if (fixed_max_support)
 				{
-					cout << "warning:reached max_support" << endl;
+					cerr << "warning:reached max_support" << endl;
 					--CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
@@ -1482,7 +1482,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			if (CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
-				cout << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
+				cerr << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
 						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
@@ -1500,7 +1500,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			{
 				if (fixed_max_support)
 				{
-					cout << "warning:reached max_support" << endl;
+					cerr << "warning:reached max_support" << endl;
 					--CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
@@ -1511,7 +1511,7 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 			if (CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
-				cout << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
+				cerr << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
 						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
@@ -1584,7 +1584,7 @@ void CUndigraph::MakeUndigraph(ifstream& alignfile)
 				alignfile >> longreadstrand;
 				if (longreadstrand == '-')
 				{
-					cout << "ERROR:THIS SOFTWARE DOSE NOT SUPPORT LONGREAD WITH '-' STRAND" << endl;
+					cerr << "ERROR:THIS SOFTWARE DOSE NOT SUPPORT LONGREAD WITH '-' STRAND" << endl;
 					exit(-1);
 				}
 			}
@@ -2495,7 +2495,7 @@ bool Ccorrector::findBestNRoute(int n)
 	ofstream correctedfile((outputpath + '/' + prefix + ".corrected.fa").c_str(), ios::trunc);
 	if (!correctedfile.is_open())
 	{
-		cout << "file to create corrected file" << endl;
+		cerr << "file to create corrected file" << endl;
 		exit(-1);
 	}
 
@@ -2505,7 +2505,7 @@ bool Ccorrector::findBestNRoute(int n)
 		repeatfile.open((outputpath + '/' + prefix + ".repreatused.fa").c_str(), ios::trunc);
 		if (!repeatfile.is_open())
 		{
-			cout << "file to create repeat file" << endl;
+			cerr << "file to create repeat file" << endl;
 			exit(-1);
 		}
 	}
@@ -2536,8 +2536,8 @@ bool Ccorrector::findBestNRoute(int n)
 			//trimedcorrectedfile << ">" << undigraph.subundigraphs[i].longreadname << endl;
 			docorrect(i, k, correctedfile, repeatfile, ppath, longreadbuffer, contigbuffer, hasrepeat);
 		}
-//		cout << "longreadhitratio = "<< longreadbuffer.hitraio()<<endl;
-//		cout << "contighitratio = "<< contigbuffer.hitraio()<<endl;
+//		cerr << "longreadhitratio = "<< longreadbuffer.hitraio()<<endl;
+//		cerr << "contighitratio = "<< contigbuffer.hitraio()<<endl;
 	}
 	hash_map<string, Clongread, str_hash, str_equal>::iterator hmit;
 	for (hmit = lrhm.begin(); hmit != lrhm.end(); hmit++)
@@ -2748,7 +2748,7 @@ void parameterAnalyzer(int argc, char* argv[])
 	{
 		if (strlen(argv[i]) == 0)
 		{
-			cout << "find NULL" << endl;
+			cerr << "find NULL" << endl;
 			tmpPara += char(31);
 		}
 		else
@@ -2768,14 +2768,14 @@ void parameterAnalyzer(int argc, char* argv[])
 	pa.AddArgType('b', "buffersize", ParsingArgs::MUST_VALUE);
 	pa.AddArgType('i', "iteration", ParsingArgs::NO_VALUE);
 	pa.AddArgType('r', "romoveN", ParsingArgs::NO_VALUE);
-	pa.AddArgType('o', "out", ParsingArgs::MUST_VALUE);
+//	pa.AddArgType('o', "out", ParsingArgs::MUST_VALUE);
 	pa.AddArgType('f', "prefix", ParsingArgs::MUST_VALUE);
-	pa.AddArgType('x', "repeatfree", ParsingArgs::NO_VALUE);
+	pa.AddArgType('o', "ordinary", ParsingArgs::NO_VALUE);
 	std::string errPos;
 	int iRet = pa.Parse(tmpPara, result, errPos);
 	if (0 > iRet)
 	{
-		cout << "Invalid parameters!" << endl << iRet << errPos << endl;
+		cerr << "Invalid parameters!" << endl << iRet << errPos << endl;
 		system("cat readme.txt");
 		exit(-1);
 	}
@@ -2789,7 +2789,7 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
@@ -2802,7 +2802,7 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss << it->second[0];
 						ss >> preprocess_threshold;
 					}
-					cout << "preprocess enabled , threshold = " << preprocess_threshold << endl;
+					cerr << "preprocess enabled , threshold = " << preprocess_threshold << endl;
 				}
 			}
 
@@ -2810,7 +2810,7 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
@@ -2822,8 +2822,8 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss << it->second[0];
 						ss >> max_support;
 						if (max_support == 65535)
-							cout << "warning: max_support cannot more than 65535!" << endl;
-						cout << "max_support = " << max_support << endl;
+							cerr << "warning: max_support cannot more than 65535!" << endl;
+						cerr << "max_support = " << max_support << endl;
 						fixed_max_support = true;
 					}
 				}
@@ -2834,7 +2834,7 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
@@ -2846,7 +2846,7 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss << it->second[0];
 						ss >> bestn;
 					}
-					cout << "bestn = " << bestn << endl;
+					cerr << "bestn = " << bestn << endl;
 				}
 			}
 
@@ -2854,7 +2854,7 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
@@ -2868,10 +2868,10 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss >> logfilename;
 					}
 					printlog = true;
-					cout << "logfile = " << logfilename << endl;
+					cerr << "logfile = " << logfilename << endl;
 					logfile.open(logfilename.c_str());
 					if (!logfile.is_open())
-						cout << "filed to create logfile" << endl;
+						cerr << "filed to create logfile" << endl;
 				}
 			}
 
@@ -2879,7 +2879,7 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() > 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
@@ -2893,10 +2893,10 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss >> subcontigfilename;
 					}
 					printsubcontgs = true;
-					cout << "subcontigfile = " << subcontigfilename << endl;
+					cerr << "subcontigfile = " << subcontigfilename << endl;
 					subcontigfile.open(subcontigfilename.c_str());
 					if (!subcontigfile.is_open())
-						cout << "filed to create subcontigfile" << endl;
+						cerr << "filed to create subcontigfile" << endl;
 				}
 			}
 
@@ -2904,7 +2904,7 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() != 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
@@ -2915,7 +2915,7 @@ void parameterAnalyzer(int argc, char* argv[])
 					ss << it->second[0];
 					ss >> numofthread;
 					omp_set_num_threads(numofthread);
-					cout << "threads = " << numofthread << endl;
+					cerr << "threads = " << numofthread << endl;
 				}
 			}
 
@@ -2923,7 +2923,7 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() != 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
@@ -2932,7 +2932,7 @@ void parameterAnalyzer(int argc, char* argv[])
 					std::stringstream ss;
 					ss << it->second[0];
 					ss >> buffersize;
-					cout << "buffersize = " << buffersize << endl;
+					cerr << "buffersize = " << buffersize << endl;
 				}
 			}
 
@@ -2940,14 +2940,14 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() > 0)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
 				else
 				{
 					iteration = true;
-					cout << "iteration = true" << endl;
+					cerr << "iteration = true" << endl;
 				}
 			}
 
@@ -2955,59 +2955,59 @@ void parameterAnalyzer(int argc, char* argv[])
 			{
 				if (it->second.size() > 0)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
 				else
 				{
 					removeN = true;
-					cout << "removeN = true" << endl;
+					cerr << "removeN = true" << endl;
 				}
 			}
 
-			if (it->first.compare("o") == 0 || it->first.compare("out") == 0)
+/*			if (it->first.compare("o") == 0 || it->first.compare("out") == 0)
 			{
 				if (it->second.size() != 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
 				else
 				{
 					outputpath = it->second[0];
-					cout << "out = " << outputpath << endl;
+					cerr << "out = " << outputpath << endl;
 				}
-			}
+			}*/
 
 			if (it->first.compare("f") == 0 || it->first.compare("prefix") == 0)
 			{
 				if (it->second.size() != 1)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
 				else
 				{
 					prefix = it->second[0];
-					cout << "prefix = " << prefix << endl;
+					cerr << "prefix = " << prefix << endl;
 				}
 			}
 
-			if (it->first.compare("x") == 0 || it->first.compare("repeatfree") == 0)
+			if (it->first.compare("o") == 0 || it->first.compare("ordinary") == 0)
 			{
 				if (it->second.size() > 0)
 				{
-					cout << "Invalid parameters!" << iRet << errPos << endl;
+					cerr << "Invalid parameters!" << iRet << errPos << endl;
 					system("cat readme.txt");
 					exit(-1);
 				}
 				else
 				{
-					repeatfree = true;
-					cout << "repeatfree = true" << endl;
+					repeatfree = false;
+					cerr << "ordinarymode = true" << endl;
 				}
 			}
 		}
@@ -3028,13 +3028,13 @@ int main(int argc, char *argv[])
 	fixed_max_support = false;
 	iteration = false;
 	removeN = false;
-	repeatfree = false;
+	repeatfree = true;
 	outputpath = "./";
 	prefix = "HiBAM";
 
 	if (argc < 3)
 	{
-		cout << "Invalid parameters!" << endl;
+		cerr << "Invalid parameters!" << endl;
 		system("cat readme.txt");
 		return -1;
 	}
@@ -3044,7 +3044,7 @@ int main(int argc, char *argv[])
 	longreadfile.open(argv[3]);
 	if (!alignfile.is_open() || !contigfile.is_open() || !longreadfile.is_open())
 	{
-		cout << "File dose not exist!" << endl;
+		cerr << "File dose not exist!" << endl;
 		alignfile.close();
 		contigfile.close();
 		longreadfile.close();
@@ -3055,31 +3055,31 @@ int main(int argc, char *argv[])
 
 	clock_t start0 = time(NULL);
 	clock_t start = start0;
-	cout << endl << "Making hashmap for long reads..." << endl;
+	cerr << endl << "Making hashmap for long reads..." << endl;
 	HashLongRead(longreadfile);
 	longreadfile.close();
 	clock_t end = time(NULL);
-	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
-	cout << "Making hashmap for contigs..." << endl;
+	cerr << "Making hashmap for contigs..." << endl;
 	HashContig(contigfile);
 	contigfile.close();
 	end = time(NULL);
-	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
-	cout << "Reading map result..." << endl;
+	cerr << "Reading map result..." << endl;
 	ReadAlign(alignfile);
 	Sort();
 	end = time(NULL);
-	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
 	ifstream newalignfile;
 	if (preprocess)
 	{
-		cout << "Preprocessing..." << endl;
+		cerr << "Preprocessing..." << endl;
 		if (access(outputpath.c_str(), F_OK) < 0)
 		{
 			if (mkdir(outputpath.c_str(), 0755) < 0)
@@ -3093,43 +3093,43 @@ int main(int argc, char *argv[])
 		newalignfile.open((outputpath + '/' + prefix + "AdaptedBlasrResult.m5").c_str());
 		if (!newalignfile.is_open())
 		{
-			cout << "fail to read adapted m5 file" << endl;
+			cerr << "fail to read adapted m5 file" << endl;
 			exit(-1);
 		}
 		clock_t end = time(NULL);
-		cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+		cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 		start = end;
 	}
 
-	cout << "Generating subcontigs..." << endl;
+	cerr << "Generating subcontigs..." << endl;
 	GetSubContigs(argv[2]);
 	end = time(NULL);
-	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
-	cout << "Making graph..." << endl;
+	cerr << "Making graph..." << endl;
 	if (preprocess)
 		CUndigraph::MakeUndigraph(newalignfile);
 	else
 		CUndigraph::MakeUndigraph(alignfile);
 	alignfile.close();
 	end = time(NULL);
-	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
-	cout << "Correcting long reads..." << endl;
+	cerr << "Correcting long reads..." << endl;
 	Ccorrector corrector(argv[3], argv[2]);
 //	corrector.findBestRouteBySupport();
 	corrector.findBestNRoute(bestn);
 	end = time(NULL);
-	cout << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
-	cout << "finished!" << endl;
+	cerr << "finished!" << endl;
 	end = time(NULL);
-	cout << "total time cost: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
+	cerr << "total time cost: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
 	start = end;
-	cout << "max_support = " << max_support << endl;
+	cerr << "max_support = " << max_support << endl;
 	system("date");
 	return 0;
 }

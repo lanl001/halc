@@ -5,17 +5,17 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/BlasrAdapter.cpp \
-../src/SequencingProject.cpp \
+../src/HiBAM.cpp \
 ../src/parsingargs.cpp 
 
 OBJS += \
 ./src/BlasrAdapter.o \
-./src/SequencingProject.o \
+./src/HiBAM.o \
 ./src/parsingargs.o 
 
 CPP_DEPS += \
 ./src/BlasrAdapter.d \
-./src/SequencingProject.d \
+./src/HiBAM.d \
 ./src/parsingargs.d 
 
 
