@@ -53,7 +53,7 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
    -w/-width n (4)<br>
    Maximum width of the dynamic programming table.<br>
    -t/-threads n (auto)<br>
-   Number of threads for one process to create.It is automatically set to the number of computing cores<br>
+   Number of threads for one process to create. It is automatically set to the number of computing cores.<br>
    -l/-log (no)<br>
    System log to print.</p>
    
