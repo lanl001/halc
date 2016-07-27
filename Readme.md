@@ -36,7 +36,7 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
 4. Using AlignGraph
 
    ```
-   HiBAM.py long_reads.fa contigs.fa [-options|-options]
+   runHiBAM.py long_reads.fa contigs.fa [-options|-options]
    ```
 
    <p>Options (default value):<br>
