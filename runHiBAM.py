@@ -1,10 +1,10 @@
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description='HiBAM.py')
+parser = argparse.ArgumentParser(description='runHiBAM.py')
 
-parser.add_argument('long_read_path', metavar='long_read.fa', help="The path of long_read.fa")
-parser.add_argument('contig_path', metavar='contig.fa', help="The path of contig.fa")
+parser.add_argument('long_read_path', metavar='long_read.fa', help="The path to long_read.fa")
+parser.add_argument('contig_path', metavar='contig.fa', help="The path to contig.fa")
 parser.add_argument("-o", "--ordinary",help="Ordinary mode utilizing repeats to make correction. The error correction software LoRDEC and the initial short reads are required to refine the repeat corrected regions. It is exclusive with the -repeat-free option.(yes)")
 parser.add_argument('-r', "--repeat-free",dest='repeatfree', help="Repeat-free mode without utilizing repeats to make correction. It is exclusive with the -ordinary option.(no)", action='store_true', default=False)
 parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary difference to split the subcontigs.(4)", default=4)
@@ -26,7 +26,7 @@ prefix = 'HiBAM_corrected'
 repeat_free_mode = False
 
 
-start_from_step = 5
+start_from_step = 1
 # Parameters Analyzing###################################
 long_read_path = args.long_read_path
 contig_path = args.contig_path
