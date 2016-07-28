@@ -2502,7 +2502,7 @@ bool Ccorrector::findBestNRoute(int n)
 	ofstream repeatfile;
 	if (!repeatfree)
 	{
-		repeatfile.open((outputpath + '/' + prefix + ".repreatused.fa").c_str(), ios::trunc);
+		repeatfile.open((outputpath + '/' + prefix + ".repeatused.fa").c_str(), ios::trunc);
 		if (!repeatfile.is_open())
 		{
 			cerr << "file to create repeat file" << endl;

@@ -27,6 +27,7 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
    Aligner [BLASR](https://github.com/PacificBiosciences/blasr) and error correction software [LoRDEC](http://www.atgc-montpellier.fr/lordec/) (only for -ordinary mode) are required to run HiBAM.
    * To use BLASR and LoRDEC, put them to your $PATH: `export PATH=PATH2BLASR:$PATH` and `export PATH=PATH2LoRDEC:$PATH`.
    * The downloaded source files in src 'src' folder can be compiled with command `g++ -fopenmp HiBAM.cpp BlasrAdapter.cpp parsingargs.cpp -o HiBAM`.
+   * Put BLASR, LoRDEC, Chunker, HiBAM and Splitter to your $PATH:`export PATH=PATH2BLASR:$PATH` , `export PATH=PATH2LoRDEC:$PATH` , `export PATH=PATH2Chunker:$PATH` , `export PATH=PATH2HiBAM$PATH` and `export PATH=PATH2Splitter:$PATH`.
 
 3. Inputs
    * Long reads in FASTA format.
