@@ -26,7 +26,7 @@ prefix = 'HiBAM_corrected'
 repeat_free_mode = False
 
 
-start_from_step = 4
+start_from_step = 5
 # Parameters Analyzing###################################
 long_read_path = args.long_read_path
 contig_path = args.contig_path
@@ -41,7 +41,8 @@ if args.ordinary:
 elif args.repeatfree:
 	repeat_free_mode = True
 
-
+print'''
+/////STEP 1 STARTED//////////////////////////////////////////////////////////////////////////////////////////////////'''
 # Step 1 chunk long reads#########################
 if start_from_step <= 1:
 	if not os.path.exists(output_dir):
@@ -69,7 +70,8 @@ if start_from_step <= 1:
 	print str(line_count) + ' files created'
 
 	print '''
-/////STEP 1 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
+/////STEP 1 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////STEP 2 STARTED//////////////////////////////////////////////////////////////////////////////////////////////////'''
 
 # Step 2 Run Blasr###############################
 if start_from_step <= 2:
@@ -107,7 +109,8 @@ if start_from_step <= 2:
 			print 'ERROR:' + 'Fail to run blasr:' + os.strerror(err)
 			exit(-1)
 	print '''
-/////STEP 2 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
+/////STEP 2 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////STEP 3 STARTED//////////////////////////////////////////////////////////////////////////////////////////////////'''
 # Step 3 Run HiBAM###############################
 if start_from_step <= 3:
 	if not os.path.exists(output_dir):
@@ -163,7 +166,8 @@ if start_from_step <= 3:
 			print 'ERROR:' + 'Fail to copy corrected sequence to output direction' + os.strerror(err)
 			exit(-1)
 	print '''
-/////STEP 3 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
+/////STEP 3 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////STEP 4 STARTED//////////////////////////////////////////////////////////////////////////////////////////////////'''
 
 # Step 4 Run LoRDEC###############################
 if start_from_step <= 4 and not repeat_free_mode:
@@ -187,14 +191,15 @@ if start_from_step <= 4 and not repeat_free_mode:
 		print 'ERROR:' + 'Fail to run LoRDEC:' + os.strerror(err)
 		exit(-1)
 
-	cat_command = 'cat ' + temp_dir + '/step4/' + prefix + '.corrected.fa ' + temp_dir + '/step3/' + prefix + '.corrected.fa >' + output_dir + prefix + '.corrected.fa >'
+	cat_command = 'cat ' + temp_dir + '/step4/' + prefix + '.corrected.fa ' + temp_dir + '/step3/' + prefix + '.corrected.fa >' + output_dir + prefix + '.corrected.fa'
 	err = os.system(cat_command)
 	if err != 0:
 		print 'ERROR:' + 'Fail to combine corrected sequence:' + os.strerror(err)
 	exit(-1)
 
 	print '''
-/////STEP 4 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
+/////STEP 4 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////STEP 5 STARTED//////////////////////////////////////////////////////////////////////////////////////////////////'''
 
 # Step 5 Trim+Split###############################
 if start_from_step <= 5:
@@ -210,18 +215,18 @@ if start_from_step <= 5:
 	else:
 		os.mkdir(temp_dir + '/step5')
 
-	trim_command = 'lordec-trim -i ' + output_dir + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.trim.fa'
+	trim_command = 'lordec-trim -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.trim.fa'
 	print 'Running command: ' + trim_command
 	err = os.system(trim_command)
 	if err != 0:
 		print 'ERROR:' + 'Fail to trim corrected sequence:' + os.strerror(err)
 		exit(-1)
 
-	split_command = 'lordec-trim-split -i ' + output_dir + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.split.fa'
+	split_command = 'lordec-trim-split -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.split.fa'
 	print 'Running command: ' + split_command
 	err = os.system(split_command)
 	if err != 0:
 		print 'ERROR:' + 'Fail to split corrected sequence:' + os.strerror(err)
 		exit(-1)
 	print '''
-/////STEP 5 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
+/////Finished!!! Results are stored in output folder/////////////////////////////////////////////////////////////////'''
