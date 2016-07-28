@@ -140,6 +140,7 @@ if start_from_step <= 3:
 			HiBAM_command += ' -c ' + str(args.coverage)
 		if args.repeatfree:
 			HiBAM_command += ' -r'
+		HiBAM_command += ' 1>' + temp_dir + '/step3/HiBAM.out ' + '2>' + temp_dir + '/step3/HiBAM.err'
 		print 'Running command: ' + HiBAM_command
 		err = os.system(HiBAM_command)
 		if err != 0:
@@ -184,6 +185,7 @@ if start_from_step <= 4 and not repeat_free_mode:
 		os.mkdir(temp_dir + '/step4')
 
 	LoRDEC_command = 'lordec-correct -2 ' + short_read_path + ' -k 19 -s 3 -i ' + temp_dir + '/step3/' + prefix + '.repeatused.fa' + ' -o ' + temp_dir + '/step4/' + prefix + '.corrected.fa'
+	LoRDEC_command += ' 1>' + temp_dir + '/step4/LoRDEC.out ' + '2>' + temp_dir + '/step3/LoRDEC.err'
 	print 'Running command: ' + LoRDEC_command
 
 	err = os.system(LoRDEC_command)
@@ -216,6 +218,7 @@ if start_from_step <= 5:
 		os.mkdir(temp_dir + '/step5')
 
 	trim_command = 'lordec-trim -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.trim.fa'
+	trim_command += ' 1>' + temp_dir + '/step5/trim.out ' + '2>' + temp_dir + '/step3/trim.err'
 	print 'Running command: ' + trim_command
 	err = os.system(trim_command)
 	if err != 0:
@@ -223,6 +226,7 @@ if start_from_step <= 5:
 		exit(-1)
 
 	split_command = 'lordec-trim-split -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.split.fa'
+	split_command += ' 1>' + temp_dir + '/step5/split.out ' + '2>' + temp_dir + '/step5/split.err'
 	print 'Running command: ' + split_command
 	err = os.system(split_command)
 	if err != 0:
