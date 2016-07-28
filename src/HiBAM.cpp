@@ -2759,18 +2759,18 @@ void parameterAnalyzer(int argc, char* argv[])
 	}
 	std::map<std::string, std::vector<std::string> > result;
 	ParsingArgs pa;
-	pa.AddArgType('p', "preprocess", ParsingArgs::MAYBE_VALUE); //input filename
-	pa.AddArgType('m', "maxSupport", ParsingArgs::MAYBE_VALUE); // output filename
-	pa.AddArgType('n', "bestn", ParsingArgs::MAYBE_VALUE);
+	pa.AddArgType('b', "boundary", ParsingArgs::MAYBE_VALUE); //input filename
+	pa.AddArgType('c', "coverage", ParsingArgs::MAYBE_VALUE); // output filename
+	pa.AddArgType('w', "width", ParsingArgs::MAYBE_VALUE);
 	pa.AddArgType('l', "log", ParsingArgs::MAYBE_VALUE); //log filename
 	pa.AddArgType('t', "threads", ParsingArgs::MUST_VALUE);
-	pa.AddArgType('s', "subcontigfile", ParsingArgs::MAYBE_VALUE);
-	pa.AddArgType('b', "buffersize", ParsingArgs::MUST_VALUE);
-	pa.AddArgType('i', "iteration", ParsingArgs::NO_VALUE);
-	pa.AddArgType('r', "romoveN", ParsingArgs::NO_VALUE);
+//	pa.AddArgType('s', "subcontigfile", ParsingArgs::MAYBE_VALUE);
+//	pa.AddArgType('b', "buffersize", ParsingArgs::MUST_VALUE);
+//	pa.AddArgType('i', "iteration", ParsingArgs::NO_VALUE);
+//	pa.AddArgType('r', "romoveN", ParsingArgs::NO_VALUE);
 	pa.AddArgType('o', "out", ParsingArgs::MUST_VALUE);
-	pa.AddArgType('f', "prefix", ParsingArgs::MUST_VALUE);
-	pa.AddArgType('x', "repeatfree", ParsingArgs::NO_VALUE);
+	pa.AddArgType('p', "prefix", ParsingArgs::MUST_VALUE);
+	pa.AddArgType('r', "repeatfree", ParsingArgs::NO_VALUE);
 	std::string errPos;
 	int iRet = pa.Parse(tmpPara, result, errPos);
 	if (0 > iRet)
@@ -2785,7 +2785,7 @@ void parameterAnalyzer(int argc, char* argv[])
 		int argflag = 0;
 		for (; it != result.end(); ++it)
 		{
-			if (it->first.compare("p") == 0 || it->first.compare("preprocess") == 0)
+			if (it->first.compare("b") == 0 || it->first.compare("boundary") == 0)
 			{
 				if (it->second.size() > 1)
 				{
@@ -2802,11 +2802,11 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss << it->second[0];
 						ss >> preprocess_threshold;
 					}
-					cerr << "preprocess enabled , threshold = " << preprocess_threshold << endl;
+					cerr << "boundary = " << preprocess_threshold << endl;
 				}
 			}
 
-			if (it->first.compare("m") == 0 || it->first.compare("maxSupport") == 0)
+			if (it->first.compare("c") == 0 || it->first.compare("coverage") == 0)
 			{
 				if (it->second.size() > 1)
 				{
@@ -2822,15 +2822,15 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss << it->second[0];
 						ss >> max_support;
 						if (max_support == 65535)
-							cerr << "warning: max_support cannot more than 65535!" << endl;
-						cerr << "max_support = " << max_support << endl;
+							cerr << "warning: coverage cannot more than 65535!" << endl;
+						cerr << "coverage = " << max_support << endl;
 						fixed_max_support = true;
 					}
 				}
 				argflag++;
 			}
 
-			if (it->first.compare("n") == 0 || it->first.compare("bestn") == 0)
+			if (it->first.compare("w") == 0 || it->first.compare("width") == 0)
 			{
 				if (it->second.size() > 1)
 				{
@@ -2846,7 +2846,7 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss << it->second[0];
 						ss >> bestn;
 					}
-					cerr << "bestn = " << bestn << endl;
+					cerr << "width = " << bestn << endl;
 				}
 			}
 
@@ -2875,31 +2875,6 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 			}
 
-			if (it->first.compare("s") == 0 || it->first.compare("subcontigfile") == 0)
-			{
-				if (it->second.size() > 1)
-				{
-					cerr << "Invalid parameters!" << iRet << errPos << endl;
-					system("cat readme.txt");
-					exit(-1);
-				}
-				else
-				{
-					if (it->second.size() == 1)
-					{
-						subcontigfilename.clear();
-						std::stringstream ss;
-						ss << it->second[0];
-						ss >> subcontigfilename;
-					}
-					printsubcontgs = true;
-					cerr << "subcontigfile = " << subcontigfilename << endl;
-					subcontigfile.open(subcontigfilename.c_str());
-					if (!subcontigfile.is_open())
-						cerr << "filed to create subcontigfile" << endl;
-				}
-			}
-
 			if (it->first.compare("t") == 0 || it->first.compare("threads") == 0)
 			{
 				if (it->second.size() != 1)
@@ -2919,52 +2894,78 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 			}
 
-			if (it->first.compare("b") == 0 || it->first.compare("buffersize") == 0)
-			{
-				if (it->second.size() != 1)
-				{
-					cerr << "Invalid parameters!" << iRet << errPos << endl;
-					system("cat readme.txt");
-					exit(-1);
-				}
-				else
-				{
-					std::stringstream ss;
-					ss << it->second[0];
-					ss >> buffersize;
-					cerr << "buffersize = " << buffersize << endl;
-				}
-			}
+			/*			if (it->first.compare("s") == 0 || it->first.compare("subcontigfile") == 0)
+			 {
+			 if (it->second.size() > 1)
+			 {
+			 cerr << "Invalid parameters!" << iRet << errPos << endl;
+			 system("cat readme.txt");
+			 exit(-1);
+			 }
+			 else
+			 {
+			 if (it->second.size() == 1)
+			 {
+			 subcontigfilename.clear();
+			 std::stringstream ss;
+			 ss << it->second[0];
+			 ss >> subcontigfilename;
+			 }
+			 printsubcontgs = true;
+			 cerr << "subcontigfile = " << subcontigfilename << endl;
+			 subcontigfile.open(subcontigfilename.c_str());
+			 if (!subcontigfile.is_open())
+			 cerr << "filed to create subcontigfile" << endl;
+			 }
+			 }
 
-			if (it->first.compare("i") == 0 || it->first.compare("iteration") == 0)
-			{
-				if (it->second.size() > 0)
-				{
-					cerr << "Invalid parameters!" << iRet << errPos << endl;
-					system("cat readme.txt");
-					exit(-1);
-				}
-				else
-				{
-					iteration = true;
-					cerr << "iteration = true" << endl;
-				}
-			}
 
-			if (it->first.compare("r") == 0 || it->first.compare("removeN") == 0)
-			{
-				if (it->second.size() > 0)
-				{
-					cerr << "Invalid parameters!" << iRet << errPos << endl;
-					system("cat readme.txt");
-					exit(-1);
-				}
-				else
-				{
-					removeN = true;
-					cerr << "removeN = true" << endl;
-				}
-			}
+			 if (it->first.compare("b") == 0 || it->first.compare("buffersize") == 0)
+			 {
+			 if (it->second.size() != 1)
+			 {
+			 cerr << "Invalid parameters!" << iRet << errPos << endl;
+			 system("cat readme.txt");
+			 exit(-1);
+			 }
+			 else
+			 {
+			 std::stringstream ss;
+			 ss << it->second[0];
+			 ss >> buffersize;
+			 cerr << "buffersize = " << buffersize << endl;
+			 }
+			 }
+
+			 if (it->first.compare("i") == 0 || it->first.compare("iteration") == 0)
+			 {
+			 if (it->second.size() > 0)
+			 {
+			 cerr << "Invalid parameters!" << iRet << errPos << endl;
+			 system("cat readme.txt");
+			 exit(-1);
+			 }
+			 else
+			 {
+			 iteration = true;
+			 cerr << "iteration = true" << endl;
+			 }
+			 }
+
+			 if (it->first.compare("r") == 0 || it->first.compare("removeN") == 0)
+			 {
+			 if (it->second.size() > 0)
+			 {
+			 cerr << "Invalid parameters!" << iRet << errPos << endl;
+			 system("cat readme.txt");
+			 exit(-1);
+			 }
+			 else
+			 {
+			 removeN = true;
+			 cerr << "removeN = true" << endl;
+			 }
+			 }*/
 
 			if (it->first.compare("o") == 0 || it->first.compare("out") == 0)
 			{
@@ -2981,7 +2982,7 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 			}
 
-			if (it->first.compare("f") == 0 || it->first.compare("prefix") == 0)
+			if (it->first.compare("p") == 0 || it->first.compare("prefix") == 0)
 			{
 				if (it->second.size() != 1)
 				{
@@ -2996,7 +2997,7 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 			}
 
-			if (it->first.compare("x") == 0 || it->first.compare("repeatfree") == 0)
+			if (it->first.compare("r") == 0 || it->first.compare("repeatfree") == 0)
 			{
 				if (it->second.size() > 0)
 				{
@@ -3007,7 +3008,7 @@ void parameterAnalyzer(int argc, char* argv[])
 				else
 				{
 					repeatfree = true;
-					cerr << " repeatfree = true" << endl;
+					cerr << "repeatfree = true" << endl;
 				}
 			}
 		}
