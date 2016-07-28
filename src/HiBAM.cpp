@@ -2500,7 +2500,7 @@ bool Ccorrector::findBestNRoute(int n)
 	}
 
 	ofstream repeatfile;
-	if (repeatfree)
+	if (!repeatfree)
 	{
 		repeatfile.open((outputpath + '/' + prefix + ".repreatused.fa").c_str(), ios::trunc);
 		if (!repeatfile.is_open())
@@ -2723,7 +2723,7 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 	}
 #pragma omp critical
 	{
-		if (hasrepeat && repeatfree)
+		if (hasrepeat && !repeatfree)
 		{
 			repeatfile << ">" << undigraph.subundigraphs[subundigraphindex].longreadname << endl;
 			repeatfile << Realign(correctedstr) << endl;
