@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Author:
+#   Frank Foerster, frank.foerster@biozentrum.uni-wuerzburg.de
+#   Simon Pfaff, simon.pfaff@stud-mail.uni-wuerzburg.de
+#   Thomas Hackl, thomas.hackl@uni-wuerzburg.de
+#
+# Last Modified: Thomas Hackl, 2014-09-10
+
+# Version 0.4
+# reliable detect binary folder with compability to MacOSX
+function expand_link {
+        FILE="$1"
+
+        TRACKING_FILE=$(mktemp)
+
+        echo "$FILE" >"$TRACKING_FILE"
+
+        NEW_FILE=$(readlink "$FILE");
+
+        while [ "$?" -eq 0 ]
+        do
+                echo "$NEW_FILE" >>"$TRACKING_FILE"
+
+                # check for duplicates
+                NUM_DUPLICATES=$(cat "$TRACKING_FILE" | sort | uniq -d | wc -l)
+
+                if [ "$NUM_DUPLICATES" -gt 0 ]
+                then
+                        break
+                fi
+
+                FILE=$(dirname "$FILE")/"$NEW_FILE"
+                echo "$FILE" >&2
+                NEW_FILE=$(readlink "$FILE")
+        done
+
+        rm "$TRACKING_FILE"
+
+        echo "FILE should be located at '$FILE'" >&2
+
+        echo "$FILE"
+}
+
+Bin="$(dirname "$(expand_link "$0")")"
+
+# check if perl exists, than use the perl version
+if [ ! -z $(which perl) ]; then
+
+    perl "$Bin/SeqChunker-perl" $@
+
+else 
+    # use the bash only or the sed based version of SeqChunker
+
+    #SeqChunker-dd need Bash Version 4 or higher, fallback to slower sed version
+
+    VER=`bash --version | grep -Eo [0-9][.][0-9] | cut -d. -f1`
+
+    if [ "$VER" -ge 4 ]; then
+
+	bash "$Bin/SeqChunker-dd" $@
+    
+    else
+
+	bash "$Bin/SeqChunker-sed" $@
+	echo "#Bash Version older than 4.0, using SeqChunker-sed"
+    fi;
+fi;
