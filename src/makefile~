@@ -1,0 +1,33 @@
+# FLAGS
+CXXFLAGS = -fopenmp#-Wall  # put compiler settings here
+# put linker settings here
+CXX	= g++ $(CXXFLAGS)
+RM  	= rm -f 
+MV	= mv
+
+all:HiBAM bin instbin
+
+HiBAM:HiBAM.o BlasrAdapter.o parsingargs.o
+	$(CXX) HiBAM.o BlasrAdapter.o parsingargs.o -o HiBAM
+
+HiBAM.o:HiBAM.cpp HiBAM.h
+	$(CXX) -c HiBAM.cpp
+
+BlasrAdapter.o:BlasrAdapter.cpp BlasrAdapter.h
+	$(CXX) -c BlasrAdapter.cpp
+
+parsingargs.o:parsingargs.cpp parsingargs.h
+	$(CXX) -c parsingargs.cpp
+
+bin:		
+	mkdir bin
+
+instbin:
+	$(MV) HiBAM bin
+
+clean:
+	$(RM) HiBAM.o BlasrAdapter.o parsingargs.o
+
+purge:		clean
+	$(RM) HiBAM
+
