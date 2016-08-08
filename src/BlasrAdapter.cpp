@@ -4,9 +4,9 @@
  *  Created on: Dec 2, 2015
  *      Author: llx
  */
-#include "SequencingProject.h"
 #include "BlasrAdapter.h"
 #include <algorithm>
+
 using namespace __gnu_cxx;
 using namespace std;
 

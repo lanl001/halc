@@ -6,6 +6,8 @@
 // Description :
 //============================================================================
 
+#include "HiBAM.h"
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -14,7 +16,6 @@
 #include <algorithm>
 #include <unistd.h>
 #include "parsingargs.h"
-#include "SequencingProject.h"
 #include "BlasrAdapter.h"
 #include <omp.h>
 #include <limits>

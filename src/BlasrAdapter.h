@@ -9,6 +9,7 @@
 #define BLASRADAPTER_H_
 #include <iostream>
 #include <fstream>
+#include "HiBAM.h"
 
 inline bool ComFileindex(Ccutpoint first, Ccutpoint second)
 {
