@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+use Pod::Usage;
+
+=head1 SYNOPSIS
+
+  interleave <A_1.fq> <A_2.fq> [B_1.fq B_2.fq ...] > interleaved.fq";
+
+=cut
+
+my @fq = @ARGV;
+pod2usage unless @fq;
+die "uneven number of libraries!" if @fq%2;
+
+while(@fq){
+    my $rf = shift(@fq);
+    my $mf = shift(@fq);
+    open(my $r, $rf) or die "$!: $rf";
+    open(my $m, $mf) or die "$!: $mf";
+    
+    while(defined(my $h = <$r>)){
+	print $h, scalar <$r>, scalar <$r>, scalar <$r>;
+	print scalar <$m>, scalar <$m>, scalar <$m>, scalar <$m>;
+    }
+
+    close $rf;
+    close $mf;
+}
+
+=head1 AUTHOR
+
+Thomas Hackl S<thomas.hackl@uni-wuerzburg.de>
+
+=cut
