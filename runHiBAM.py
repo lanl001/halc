@@ -22,7 +22,7 @@ long_read_path = '/rhome/llan/bigdata/HiBAM/e-coli/faultlongread.fa'
 short_read_path = '/rhome/llan/bigdata/HiBAM/e-coli/shortbasetrimed/first+second.fasta'
 temp_dir = './temp'
 output_dir = './output'
-prefix = 'HiBAM_corrected'
+prefix = 'HiBAM'
 repeat_free_mode = False
 
 
