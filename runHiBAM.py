@@ -160,7 +160,7 @@ if start_from_step <= 3:
 		err = os.system(cat_command)
 		if err != 0:
 			print 'ERROR:' + 'Fail to combine corrected sequence:' + os.strerror(err)
-		exit(-1)
+			exit(-1)
 
 	if repeat_free_mode:
 		cp_command = 'cp ' + temp_dir + '/step3/' + prefix + '.corrected.fa ' + output_dir
