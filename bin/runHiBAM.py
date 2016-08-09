@@ -221,7 +221,7 @@ if start_from_step <= 5:
 	else:
 		os.mkdir(temp_dir + '/step5')
 
-	trim_command = 'lordec-trim -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.trim.fa'
+	trim_command = 'Trimmer -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.trim.fa'
 	trim_command += ' 1>' + temp_dir + '/step5/trim.out ' + '2>' + temp_dir + '/step3/trim.err'
 	print 'Running command: ' + trim_command
 	err = os.system(trim_command)
