@@ -196,7 +196,7 @@ if start_from_step <= 4 and not repeat_free_mode:
 		print 'ERROR:' + 'Fail to run LoRDEC:' + os.strerror(err)
 		exit(-1)
 
-	cat_command = 'cat ' + temp_dir + '/step4/' + prefix + '.corrected.fa ' + temp_dir + '/step3/' + prefix + '.corrected.fa >' + output_dir + prefix + '.corrected.fa'
+	cat_command = 'cat ' + temp_dir + '/step4/' + prefix + '.corrected.fa ' + temp_dir + '/step3/' + prefix + '.corrected.fa >' + output_dir + '/' + prefix + '.corrected.fa'
 	err = os.system(cat_command)
 	if err != 0:
 		print 'ERROR:' + 'Fail to combine corrected sequence:' + os.strerror(err)
@@ -221,7 +221,7 @@ if start_from_step <= 5:
 	else:
 		os.mkdir(temp_dir + '/step5')
 
-	trim_command = 'Trimmer -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.trim.fa'
+	trim_command = 'Trimmer -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + '/' + prefix + '.trim.fa'
 	trim_command += ' 1>' + temp_dir + '/step5/trim.out ' + '2>' + temp_dir + '/step3/trim.err'
 	print 'Running command: ' + trim_command
 	err = os.system(trim_command)
@@ -229,7 +229,7 @@ if start_from_step <= 5:
 		print 'ERROR:' + 'Fail to trim corrected sequence:' + os.strerror(err)
 		exit(-1)
 
-	split_command = 'Splitter -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.split.fa'
+	split_command = 'Splitter -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + '/' + prefix + '.split.fa'
 	split_command += ' 1>' + temp_dir + '/step5/split.out ' + '2>' + temp_dir + '/step5/split.err'
 	print 'Running command: ' + split_command
 	err = os.system(split_command)
