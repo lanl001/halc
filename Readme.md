@@ -25,7 +25,7 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
 2. Installation
 
    Aligner [BLASR](https://github.com/PacificBiosciences/blasr) and error correction software [LoRDEC](http://www.atgc-montpellier.fr/lordec/) (only for -ordinary mode) are required to run HiBAM.
-   * The source files in 'src' and 'thirdparty' folders can be compiled to generate a 'bin' folder by running Makefile`make all`.
+   * The source files in 'src' and 'thirdparty' folders can be compiled to generate a 'bin' folder by running Makefile: `make all`.
    * Put BLASR, LoRDEC and the 'bin' folder to your $PATH: `export PATH=PATH2BLASR:$PATH` , `export PATH=PATH2LoRDEC:$PATH` and `export PATH=PATH2bin:$PATH`, respectively.
 
 3. Inputs
