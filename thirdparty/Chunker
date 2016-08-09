@@ -47,7 +47,7 @@ Bin="$(dirname "$(expand_link "$0")")"
 # check if perl exists, than use the perl version
 if [ ! -z $(which perl) ]; then
 
-    perl "$Bin/Chunker-perl" $@
+    perl "$Bin/SeqChunker-perl" $@
 
 else 
     # use the bash only or the sed based version of SeqChunker
@@ -58,11 +58,11 @@ else
 
     if [ "$VER" -ge 4 ]; then
 
-	bash "$Bin/Chunker-dd" $@
+	bash "$Bin/SeqChunker-dd" $@
     
     else
 
-	bash "$Bin/Chunker-sed" $@
+	bash "$Bin/SeqChunker-sed" $@
 	echo "#Bash Version older than 4.0, using SeqChunker-sed"
     fi;
 fi;

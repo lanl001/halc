@@ -1,0 +1,327 @@
+#!/bin/bash
+
+# Author: Thomas Hackl, thomas.hackl@uni-wuerzburg.de
+#         Simon Pfaff, simon.pfaff@stud-mail.uni-wuerzburg.de
+# Last Modified: Simon Pfaff, 2014-04-08
+# Version 0.12
+
+## TODO
+## CHUNK_STEP, e.g. 1~2 for only odds
+## split prefix multiple files
+
+# Variable defaults
+DEBUG=1;
+CHUNK_NUM=0;
+CHUNK_SIZE_BRUTTO=0;
+CHUNK_SKIP=0;
+CHUNK_COUNT=0;
+CHUNK_RATIO=0;
+SKIP=0;
+OUT="";
+OUT_SPLIT=0;
+MAX_BLOCK_SIZE=1000000;
+CHUNK_STEP=1;
+CHUNK_STEP_NUM=1;
+CHUNK_FIRST=1;
+CHUNK_LAST=0;
+CHUNK_END=0;
+
+show_usage()
+{
+    echo "Usage: SeqChunker [OPTIONS ...] FILE1 FILE2 ..."
+}
+
+show_help()
+{
+    show_usage
+    cat <<EOF
+
+SeqChunker efficiently samples and outputs chunks from FASTA and FASTQ files, 
+ e.g. to serve as on-the-fly input for other tools. 
+
+  -n/--chunk-number       Number of chunks to be sampled [$CHUNK_NUM]
+  -r/--chunk-ratio        Fraction of each chunk to  actually be outputted [$CHUNK_RATIO]
+  -x/--chunk-step         Output a chunk every -x chunks [$CHUNK_STEP]
+  -y/--chunks-per-step    Output -y chunks every -x chunks. Cannot be greater 
+                          than -x [$CHUNK_STEP_NUM]
+  -f/--first-chunk        Skip chunks before this chunk [$CHUNK_FIRST]
+  -l/--last-chunk         Last after this chunk (including skipped ones) [$CHUNK_LAST]
+  -q/--quiet              Suppress non-critical messages
+  -d/--debug              Output more verbose messages
+  -h/--help               Show this help screen
+
+NOTE: This is just a hotfix alternative while the real SeqChunker undergoes maintenance.
+
+NOTE: Do not use chunk sizes similar to or smaller than the expected record 
+ sizes. Heuristics get messed up and cause unpredictable behaviour.
+
+NOTE: Backfall SeqChunker (uses only sed) for old Bash versions, only use FASTQ! Can not handle --chunk-size --chunk-number. 
+
+EOF
+}
+
+# Execute getopt
+ARGS=`getopt --name "SeqChunker-sed" \
+    --options "n:s:e:k:c:r:x:y:f:l:b:m:o:qdh" \
+    --longoptions "chunk-number:,chunk-size:,chunk-end:,chunk-count:,chunk-skip:,chunk-ratio:,chunk-step:,chunks-per-step:,first-chunk:,last-chunk:,byte-skip:,out:,quiet,debug,help" \
+    -- "$@"`
+
+#Bad arguments
+[ $? -ne 0 ] && exit 1;
+
+# A little magic
+eval set -- "$ARGS"
+
+# Now go through all the options
+while true; do
+    case "$1" in
+        -n|--chunk-number)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_NUM=$2;
+            shift 2;;
+
+        -s|--chunk-size)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_SIZE_BRUTTO=$2
+            shift 2;;
+
+        -e|--chunk-end)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_END=$2;
+            shift 2;;
+
+        -k|--chunk-skip)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9~] ]] ; then
+                echo "$1: '$2' not a valid input" 1>&2;
+                exit 1;
+            fi;
+            if [[ "$2" =~ ~ ]]; then 
+	        CHUNK_SKIP=${2%%~*};
+	        CHUNK_STEP=${2##*~};
+            else
+                CHUNK_SKIP=$2;
+                CHUNK_STEP=1;
+            fi;
+            shift 2;;
+
+	-f|--first-chunk)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_FIRST=$2;
+            shift 2;;
+
+	-l|--last-chunk)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_LAST=$2
+            shift 2;;
+
+        -c|--chunk-count)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_COUNT=$2
+            shift 2;;
+
+        -r|--chunk-ratio)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9.] ]]; then
+                echo "$1: '$2' not a FLOAT" 1>&2;
+                exit 1;
+            fi;
+	    CHUNK_RATIO=$2
+	    shift 2;;
+
+        -x|--chunk-step)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_STEP=$2
+            shift 2;;
+
+	-y|--chunks-per-step)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            CHUNK_STEP_NUM=$2
+            shift 2;;
+
+        -o|--out)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            OUT=$2
+            shift 2;;
+        
+        -m|--max-block-size)
+            [ ! -n "$2" ] && (echo "$1: value required" 1>&2 && exit 1);
+            if [[ "$2" =~ [^0-9] ]]; then
+                echo "$1: '$2' not an INT" 1>&2;
+                exit 1;
+            fi;
+            MAX_BLOCK_SIZE=$2
+            shift 2;;
+
+        -q|--quiet)
+            DEBUG=0
+            shift;;
+
+        -d|--debug)
+            DEBUG=2
+            shift;;
+        
+	-h|--help)
+	    show_help && exit 0;;
+
+	-V|--version)
+            grep -m1 'Version' "$0" | sed 's/.*Version\s*//';
+            exit 0;;
+
+        --)
+            shift
+            break;;
+        *)
+            echo "$1: Unknown option" 1>&2 && exit 1;;
+    esac
+done
+
+if [ $# -eq 0 ]; then
+    echo "FILE required" 1>&2;
+    show_usage;
+    exit 1
+fi;
+
+
+# default output file descriptor
+if [ -z "$OUT" ] || [ "$OUT" == '-' ]; then
+    exec 3>&1;
+else
+    if [[ $OUT =~ % ]]; then
+        # dynamic descriptor for every chunk, no default ...
+        OUT_SPLIT=1;
+    else
+        eval "exec 3>$OUT";
+    fi;
+fi;
+
+
+
+##SeqChunker.sed-only can not handle CHUNK_SIZE & CHUNK_NUMBER - there are no Chunks, only Records
+if [ "$CHUNK_SIZE_BRUTTO" -gt 0 ]; then
+    echo "Backfall SeqChunker can not handle chunk size" 1>&2
+    echo "Set chunksize to 0" 1>&2
+    CHUNK_SIZE_BRUTTO=0
+fi;
+
+
+if [ "$CHUNK_NUM" -gt 0 ]; then
+    echo "Backfall SeqChunker can not handle chunk number" 1>&2
+    echo "Set chunk number to 0" 1>&2
+    CHUNK_NUM=0
+fi;
+
+## 1.03 need no chunk-ratio
+#if [ "$CHUNK_RATIO" -gt 0 ] &&  [[ "$CHUNK_STEP" -gt 0 || "$CHUNK_STEP_NUM" -gt 0  ]]; then
+#    echo "either --chunk-ratio or --chunk-step and --chunk-per-step, not both allowed" 1>&2
+#    exit 1
+#fi;
+
+if [[ "$CHUNK_END" -gt 0 && "$CHUNK_LAST" -gt 0 ]]; then
+    echo "either --chunk-end or --last-chunk, not both" 1>&2
+    exit 1
+fi;
+
+
+for FILE in $@; do
+
+    ##determine format (FASTA/FASTQ)
+    IS_FASTQ=$(sed -n '
+1{
+s/^[^>@].*/!/
+t finished
+s/^>.*/0/
+t finished
+s/^@.*/1/
+:finished
+p;q
+}' "$FILE");
+    if [[ $IS_FASTQ == !* ]]; then
+        echo "FILE neither FASTA nor FASTQ" 1>&2
+        exit 1
+    fi;
+done;
+
+##Is FASTA
+if [ "$IS_FASTQ" -eq 0 ]; then
+    echo "Backfall SeqChunker needs FASTQ" 1>&2
+    exit 1
+
+else
+    ##Is FASTQ
+
+    RECORD_STEP=$(($CHUNK_STEP * 4));                #4 lines, cause of FASTQ
+    NUMBER_NS=$((($CHUNK_STEP_NUM * 4) - 1));        #additional 3 line -> 4 Lines
+    NS=$(printf 'N;%0.s' $(seq 1 $NUMBER_NS));       #prints 3 Ns for every Chunkstep
+    RECORD_FIRST=$(( 1 + ( 4 * ($CHUNK_FIRST - 1)) ));
+    LAST_RECORD=$(($CHUNK_LAST * 4 ));
+
+    RECORD_NUMBER=$((($RECORD_FIRST+(($CHUNK_STEP*($CHUNK_END * 4)) / $CHUNK_STEP_NUM) - $RECORD_STEP + ($NUMBER_NS + 1)-1)));
+    if [ "$CHUNK_END" -gt 0 ]; then
+        SED=''$RECORD_FIRST'~'$RECORD_STEP'{'$NS'p;'$RECORD_NUMBER'Q}';    #e.g. SED = '1~12{N;N;N;p;21Q}'
+    elif [ "$LAST_RECORD" -gt 0 ]; then
+        SED=''$RECORD_FIRST'~'$RECORD_STEP'{'$NS'p;'$LAST_RECORD'Q}';
+    else 
+        SED=''$RECORD_FIRST'~'$RECORD_STEP'{'$NS'p}';
+    fi;
+
+
+    for FILE in $@; do
+	sed -ne "$SED" < "$FILE"
+    done;
+    #echo $SED
+fi;
+
+
+
+## OLD CODE - only fix Ratios
+#if [ $CHUNK_RATIO == 0.2 ]; then
+#   SED='1~20{N;N;N;p}' # 4/20 == 0.2
+#   for FILE in $@; do
+#       sed -ne "$SED" < "$FILE"
+#   done;
+#elif [ $CHUNK_RATIO == 0.3 ]; then
+#   SED='1~40{N;N;N;N;N;N;N;N;N;N;N;p}' # 12/40 == 0.3
+#   for FILE in $@; do
+#       sed -ne "$SED" < "$FILE"
+#   done;
+#elif [ $CHUNK_RATIO == 0.5 ]; then
+#   SED='1~8{N;N;N;p}' # 4/8 == 0.5
+#   for FILE in $@; do
+#       sed -ne "$SED" < "$FILE"
+#   done;
+#else
+#   cat $@
+#fi;

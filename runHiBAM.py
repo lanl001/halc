@@ -200,7 +200,7 @@ if start_from_step <= 4 and not repeat_free_mode:
 	err = os.system(cat_command)
 	if err != 0:
 		print 'ERROR:' + 'Fail to combine corrected sequence:' + os.strerror(err)
-	exit(-1)
+		exit(-1)
 
 	print '''
 /////STEP 4 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
