@@ -132,7 +132,7 @@ if start_from_step <= 3:
 		longread_name = 'pb-%03d' % i
 		m5filename = 'blasrresult-%03d.m5' % i
 		HiBAM_command = 'HiBAM ' + temp_dir + '/step2/' + m5filename + ' ' + contig_path + ' ' + temp_dir + '/step1/' + longread_name + '.fa -o ' + temp_dir + '/step3/' + ' -p ' + longread_name
-		if not args.threads:
+		if args.threads:
 			HiBAM_command += ' -t ' + args.threads
 		if args.boundary:
 			HiBAM_command += ' -b ' + str(args.boundary)

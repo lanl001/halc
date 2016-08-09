@@ -57,7 +57,7 @@ if start_from_step <= 1:
 	else:
 		os.mkdir(temp_dir + '/step1')
 
-	Chunker_command = 'SeqChunker -s 200M -o ' + temp_dir + '/step1/pb-%03d.fa ' + long_read_path + ' 1>' + temp_dir + '/step1/SeqChunker.out ' + '2>' + temp_dir + '/step1/SeqChunker.err'
+	Chunker_command = 'Chunker -s 200M -o ' + temp_dir + '/step1/pb-%03d.fa ' + long_read_path + ' 1>' + temp_dir + '/step1/SeqChunker.out ' + '2>' + temp_dir + '/step1/SeqChunker.err'
 
 	print 'Running command: ' + Chunker_command
 	err = os.system(Chunker_command)
@@ -229,7 +229,7 @@ if start_from_step <= 5:
 		print 'ERROR:' + 'Fail to trim corrected sequence:' + os.strerror(err)
 		exit(-1)
 
-	split_command = 'lordec-trim-split -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.split.fa'
+	split_command = 'Splitter -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + prefix + '.split.fa'
 	split_command += ' 1>' + temp_dir + '/step5/split.out ' + '2>' + temp_dir + '/step5/split.err'
 	print 'Running command: ' + split_command
 	err = os.system(split_command)
