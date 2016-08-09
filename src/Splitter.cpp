@@ -106,6 +106,11 @@ const char* getSequence(char* str, long &pos, long &total_len, long size)
 		}
 		pos++;
 	}
+	if(pos == size || str[pos] == '\0')
+	{
+		temp.insert(temp.size(), str + pos - read_len, read_len);
+		total_len += read_len;
+	}
 	return temp.c_str();
 }
 /**********************************************************************************/
@@ -178,8 +183,6 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	// We get a handle on a FASTA bank for the PacBio reads
-	//   BankFasta bank(pacbioFile);
 	std::ifstream infile(pacbioFile.c_str());
 	char * inbuffer;
 	std::filebuf *pbuf;
@@ -190,10 +193,8 @@ int main(int argc, char* argv[])
 	pbuf->sgetn(inbuffer, size);
 	int len = 0;
 	long pos = 0;
-	// Create the output bank
 
 	std::ofstream outfile(outReadFile.c_str());
-	// allocate buffer
 	char *buffer = new char[MAX_READ_LEN];
 	std::string title;
 	int part = 1;
