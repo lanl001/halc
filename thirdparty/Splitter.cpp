@@ -106,7 +106,7 @@ std::string getSequence(char* str, long &pos, long &total_len, long size)
 		}
 		pos++;
 	}
-	if(pos == size || str[pos] == '\0')
+	if (pos == size || str[pos] == '\0')
 	{
 		temp.insert(temp.size(), str + pos - read_len, read_len);
 		total_len += read_len;
@@ -207,7 +207,8 @@ int main(int argc, char* argv[])
 		part = 1;
 		read_len = 0;
 		title = getline(inbuffer, pos, size);
-		read = getSequence(inbuffer, pos, read_len, size).c_str();
+		std::string tempstr = getSequence(inbuffer, pos, read_len, size);
+		read = tempstr.c_str();
 		for (int i = 0; i < read_len; i++)
 		{ // scan current input sequence
 			if (isupper(read[i]))
