@@ -88,7 +88,7 @@ std::string getline(char* str, long &pos, long size)
 	return temp;
 }
 
-const char* getSequence(char* str, long &pos, long &total_len, long size)
+std::string getSequence(char* str, long &pos, long &total_len, long size)
 {
 	std::string temp;
 	int read_len = 0;
@@ -111,7 +111,7 @@ const char* getSequence(char* str, long &pos, long &total_len, long size)
 		temp.insert(temp.size(), str + pos - read_len, read_len);
 		total_len += read_len;
 	}
-	return temp.c_str();
+	return temp;
 }
 /**********************************************************************************/
 /* Trim lower case letters from reads and split them at lower/upper case boundary */
@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
 		part = 1;
 		read_len = 0;
 		title = getline(inbuffer, pos, size);
-		read = getSequence(inbuffer, pos, read_len, size);
+		read = getSequence(inbuffer, pos, read_len, size).c_str();
 		for (int i = 0; i < read_len; i++)
 		{ // scan current input sequence
 			if (isupper(read[i]))
