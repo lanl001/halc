@@ -197,6 +197,7 @@ int main(int argc, char* argv[])
 	std::ofstream outfile(outReadFile.c_str());
 	char *buffer = new char[MAX_READ_LEN];
 	std::string title;
+	std::string comment;
 	int part = 1;
 	const char *ucstart = NULL;
 	long read_len;
@@ -206,7 +207,10 @@ int main(int argc, char* argv[])
 	{
 		part = 1;
 		read_len = 0;
-		title = getline(inbuffer, pos, size);
+		title = getword(inbuffer, pos, size);
+		comment.clear();
+		if (inbuffer[pos] != '\n')
+			comment = getline(inbuffer, pos, size);
 		std::string tempstr = getSequence(inbuffer, pos, read_len, size);
 		read = tempstr.c_str();
 		for (int i = 0; i < read_len; i++)
@@ -232,7 +236,10 @@ int main(int argc, char* argv[])
 
 						char numbuf[22];
 						sprintf(numbuf, "_%d", part);
-						outfile << title + numbuf << std::endl;
+						if (comment.empty())
+							outfile << title + numbuf << std::endl;
+						else
+							outfile << title + numbuf + ' ' + comment << std::endl;
 						outfile << buffer << std::endl;
 						part++;
 					}
@@ -249,8 +256,10 @@ int main(int argc, char* argv[])
 
 				char numbuf[22];
 				sprintf(numbuf, "_%d", part);
-				outfile << title + numbuf << std::endl;
-				outfile << buffer << std::endl;
+				if (comment.empty())
+					outfile << title + numbuf << std::endl;
+				else
+					outfile << title + numbuf + ' ' + comment << std::endl;
 			}
 			ucstart = NULL;
 		}

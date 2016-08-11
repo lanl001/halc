@@ -184,13 +184,17 @@ int main(int argc, char* argv[])
 	std::ofstream outfile(outReadFile.c_str());
 	char *buffer = new char[MAX_READ_LEN];
 	std::string title;
+	std::string comment;
 	long read_len;
 	const char* read;
 
 	while (pos < size)
 	{
 		read_len = 0;
-		title = getline(inbuffer, pos, size);
+		title = getword(inbuffer, pos, size);
+		comment.clear();
+		if(inbuffer[pos] != '\n')
+			comment = getline(inbuffer, pos, size);
 		read = getSequence(inbuffer, pos, read_len, size).c_str();
 		int firstUC = -1, lastUC = -1; // first and last position of uppercase nuc in the input seq
 		for (int i = 0; i < read_len; i++)
@@ -222,7 +226,10 @@ int main(int argc, char* argv[])
 		}
 		buffer[lastUC - firstUC + 1] = '\0';
 
-		outfile << title << std::endl;
+		if(comment.empty())
+			outfile << title << std::endl;
+		else
+			outfile << title + ' ' + comment << std::endl;
 		outfile << buffer << std::endl;
 	}
 	delete[] buffer;
