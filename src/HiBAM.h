@@ -12,6 +12,7 @@
 #include<map>
 #include<fstream>
 #include<list>
+#include<iostream>
 class Ccutpoint
 {
 public:
@@ -30,7 +31,13 @@ struct Nspasenode
 	int longreadtailindex;
 	int contigheadindex;
 	int contigtailindex;
-	Nspasenode():longreadheadindex(0),longreadtailindex(0),contigheadindex(0),contigtailindex(0){}
+	int rawlongreadheadindex;
+	int rawlongreadtailindex;
+	std::string longreadname;
+	Nspasenode() :
+			longreadheadindex(0), longreadtailindex(0), contigheadindex(0), contigtailindex(0)
+	{
+	}
 };
 
 class CSubcontig
@@ -46,13 +53,18 @@ public:
 	int headoffset;
 	int tailoffset;
 	unsigned long indexofsubcontigs;
-//	std::vector<Nspasenode>* Nspace;
+	std::vector<Nspasenode>* Nspace;
 
 	bool operator==(const CSubcontig& obj) const;
 	CSubcontig() :
-			headoffset(0), tailoffset(0)//, Nspace(NULL)
+			headoffset(0), tailoffset(0), Nspace(NULL)
 	{
 	}
+};
+
+struct Nnodeforsort
+{
+	CSubcontig* me;
 };
 
 class Ccontig
@@ -123,12 +135,15 @@ public:
 	Cfilebuffer(std::string filename, long size) :
 			hited(0), nothited(0)
 	{
+		std::ifstream file(filename.c_str());
+		if (file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in) < size)
+			size = file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in);
+		file.rdbuf()->pubseekpos(0, std::ios::in);
 		buffer = new char[size + 1];
 		buffer[size] = '\0';
 		myfilename = filename;
 		expectsize = size;
 		startoffset = 0;
-		std::ifstream file(filename.c_str());
 		file.read(buffer, expectsize);
 		mysize = file.gcount();
 		buffer[mysize] = '\0';
@@ -137,12 +152,15 @@ public:
 	void refreshbuffer(std::string filename, long size)
 	{
 		delete[] buffer;
+		std::ifstream file(filename.c_str());
+		if (file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in) < size)
+			size = file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in);
+		file.rdbuf()->pubseekpos(0, std::ios::in);
 		buffer = new char[size + 1];
 		buffer[size] = '\0';
 		myfilename = filename;
 		expectsize = size;
 		startoffset = 0;
-		std::ifstream file(filename.c_str());
 		file.read(buffer, expectsize);
 		mysize = file.gcount();
 		buffer[mysize] = '\0';
@@ -171,20 +189,21 @@ public:
 	static std::vector<std::vector<CSubcontig> > contiglist; //contigs of a longread
 	std::string longreadname;
 	std::vector<CSubcontigEx> Subconitglist; //all subcontigs of a longread
+	friend class CUndigraph;
 	__gnu_cxx ::hash_map<std::pair<unsigned long, unsigned long>, bool, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal> edges[3];
 private:
 	int ctoffset;
 	int lroffset;
 //	int matchlength;
 	int matchoffset;
-	int numoflines(std::string& s,int begin,int end);
-	int cutlongread(int length,CSubcontig& subcontig);
-	int cutlongreadreverse(int length,CSubcontig& subcontig);
+	int numoflines(std::string& s, int begin, int end);
+	int cutlongread(int length, CSubcontig& subcontig);
+	int cutlongreadreverse(int length, CSubcontig& subcontig);
 	//vector<CSubcontig> badcontigs;
 public:
 	CSubUndigraph();
 
-	bool addToContigList(unsigned long head, unsigned long tail, char strand, int lrheadindex, int lrtailindex, int headoffset, int tailoffset,int ctheadindex,int cttailindex);
+	bool addToContigList(unsigned long head, unsigned long tail, char strand, int lrheadindex, int lrtailindex, int headoffset, int tailoffset, int ctheadindex, int cttailindex);
 
 	static bool clearcontiglist();
 
@@ -209,6 +228,9 @@ public:
 	static void
 	MakeUndigraph(std::ifstream& alignfile);
 	static std::vector<CSubUndigraph> subundigraphs;
+	static std::vector<Nnodeforsort> Nnodes;
+	static void replaceN();
+	static inline bool comContigName(Nnodeforsort first, Nnodeforsort second);
 };
 
 class CMyVectorInt: public std::vector<int>
@@ -238,13 +260,14 @@ private:
 	int froutebysimilarity(int index, int *&dist, int *&path);
 	void nfroutebysimilarity(int index, int* counter, int j, int pathposition, int jposition, int *&path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
 	void bestnrouteofsimilarity(int index, int n, int *path, std::vector<CMyVectorInt> &pdist, std::vector<CMyVectorInt> &ppath);
-	int leastcostofn(int index, std::vector<CMyVectorInt> &path,bool &hasrepeat);
+	int leastcostofn(int index, std::vector<CMyVectorInt> &path, bool &hasrepeat);
 	std::string& changetoreverse(std::string& s);
 public:
 	Ccorrector(char* lrfile, char* ctfile);
 	bool findBestRouteBySimilarity();
 	bool findBestRouteBySupport();
 	bool findBestNRoute(int n);
-	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile,std::ofstream &repeatfile, std::vector<CMyVectorInt> &ppath, Cfilebuffer &longreadbuffer, Cfilebuffer &contigbuffer, bool & hasrepeat);
+	void docorrect(int subundigraphindex, int ppathindex, std::ofstream &correctedfile, std::ofstream &repeatfile, std::vector<CMyVectorInt> &ppath, Cfilebuffer &longreadbuffer,
+			Cfilebuffer &contigbuffer, bool & hasrepeat);
 };
 #endif /* SEQUENCINGPROJECT_H_ */

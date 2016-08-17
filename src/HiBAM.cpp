@@ -36,7 +36,7 @@ bool printlog = false;
 string subcontigfilename;
 bool printsubcontgs = false;
 string logfilename;
-int buffersize;
+long buffersize;
 bool preprocess;
 int preprocess_threshold;
 unsigned short max_support;
@@ -960,58 +960,64 @@ int CSubUndigraph::cutlongread(int length, CSubcontig& subcontig) //length means
 	unsigned int tempsimilarity = 0;
 	bool isfirst = true;
 	Nspasenode tempnode;
-	/*	while ((p = contigsequence.find('N', p)) != string::npos)
-	 {
-	 if (p != 0)
-	 {
-	 sumlength += getlrlength(p - q, tempsimilarity);
-	 readedbase += p - q - numoflines(contigsequence, q, p - 1);
-	 }
-	 q = p;
-	 sumsimilarity += tempsimilarity;
-	 if ((p = contigsequence.find_first_not_of('N', p)) != string::npos)
-	 {
-	 templength = getlrlength(p - q, tempsimilarity);
-	 sumsimilarity += tempsimilarity;
-	 if (isfirst)
-	 {
-	 subcontig.Nspace = new vector<Nspasenode>;
-	 isfirst = false;
-	 }
-	 tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
-	 readedbase += p - q - numoflines(contigsequence, q, p - 1);
-	 tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
-	 tempnode.longreadheadindex = subcontig.longreadheadindex + sumlength;
-	 tempnode.longreadtailindex = subcontig.longreadheadindex + sumlength + templength - 1;
-	 sumlength += templength;
-	 subcontig.Nspace->push_back(tempnode);
-	 }
-	 else
-	 {
-	 p = contigsequence.size();
-	 templength = getlrlength(p - q, tempsimilarity);
-	 sumsimilarity += tempsimilarity;
-	 if (isfirst)
-	 {
-	 subcontig.Nspace = new vector<Nspasenode>;
-	 isfirst = false;
-	 }
-	 tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
-	 readedbase += p - q - numoflines(contigsequence, q, p - 1);
-	 tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
-	 tempnode.longreadheadindex = subcontig.longreadheadindex + sumlength;
-	 tempnode.longreadtailindex = subcontig.longreadheadindex + sumlength + templength - 1;
-	 sumlength += templength;
-	 subcontig.Nspace->push_back(tempnode);
-	 }
-	 q = p;
-	 }
-	 if (q != contigsequence.size())
-	 {*/
-	p = contigsequence.size();
-	sumlength += getlrlength(p - q, tempsimilarity);
-	sumsimilarity += tempsimilarity;
-//	}
+	while ((p = contigsequence.find('N', p)) != string::npos)
+	{
+		if (p != 0)
+		{
+			sumlength += getlrlength(p - q, tempsimilarity);
+			readedbase += p - q - numoflines(contigsequence, q, p - 1);
+		}
+		q = p;
+		sumsimilarity += tempsimilarity;
+		if ((p = contigsequence.find_first_not_of('N', p)) != string::npos)
+		{
+			templength = getlrlength(p - q, tempsimilarity);
+			sumsimilarity += tempsimilarity;
+			if (isfirst)
+			{
+				subcontig.Nspace = new vector<Nspasenode>;
+				isfirst = false;
+			}
+			tempnode.longreadname = this->longreadname;
+			tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
+			readedbase += p - q - numoflines(contigsequence, q, p - 1);
+			tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
+			tempnode.longreadheadindex = subcontig.longreadheadindex + sumlength;
+			tempnode.longreadtailindex = subcontig.longreadheadindex + sumlength + templength - 1;
+			tempnode.rawlongreadheadindex = tempnode.longreadheadindex;
+			tempnode.rawlongreadtailindex = tempnode.longreadtailindex;
+			sumlength += templength;
+			subcontig.Nspace->push_back(tempnode);
+		}
+		else
+		{
+			p = contigsequence.size();
+			templength = getlrlength(p - q, tempsimilarity);
+			sumsimilarity += tempsimilarity;
+			if (isfirst)
+			{
+				subcontig.Nspace = new vector<Nspasenode>;
+				isfirst = false;
+			}
+			tempnode.longreadname = this->longreadname;
+			tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
+			readedbase += p - q - numoflines(contigsequence, q, p - 1);
+			tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
+			tempnode.longreadheadindex = subcontig.longreadheadindex + sumlength;
+			tempnode.longreadtailindex = subcontig.longreadheadindex + sumlength + templength - 1;
+			tempnode.rawlongreadheadindex = tempnode.longreadheadindex;
+			tempnode.rawlongreadtailindex = tempnode.longreadtailindex;
+			sumlength += templength;
+			subcontig.Nspace->push_back(tempnode);
+		}
+		q = p;
+	}
+	if (q != contigsequence.size())
+	{
+		p = contigsequence.size();
+		sumlength += getlrlength(p - q, tempsimilarity);
+		sumsimilarity += tempsimilarity;
+	}
 	subcontig.similarity = sumsimilarity;
 	return sumlength;
 }
@@ -1088,58 +1094,63 @@ int CSubUndigraph::cutlongreadreverse(int length, CSubcontig& subcontig)
 	unsigned int tempsimilarity = 0;
 	bool isfirst = true;
 	Nspasenode tempnode;
-	/*	while ((p = contigsequence.find('N', p)) != string::npos)
-	 {
-	 if (p != 0)
-	 {
-	 sumlength += getlrlengthreverse(p - q, tempsimilarity);
-	 readedbase += p - q - numoflines(contigsequence, q, p - 1);
-	 }
-	 q = p;
-	 sumsimilarity += tempsimilarity;
-	 if ((p = contigsequence.find_first_not_of('N', p)) != string::npos)
-	 {
-	 templength = getlrlengthreverse(p - q, tempsimilarity);
-	 sumsimilarity += tempsimilarity;
-	 if (isfirst)
-	 {
-	 subcontig.Nspace = new vector<Nspasenode>;
-	 isfirst = false;
-	 }
-	 tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
-	 readedbase += p - q - numoflines(contigsequence, q, p - 1);
-	 tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
-	 tempnode.longreadtailindex = subcontig.longreadtailindex - sumlength;
-	 tempnode.longreadheadindex = subcontig.longreadtailindex - sumlength - templength + 1;
-	 sumlength += templength;
-	 subcontig.Nspace->push_back(tempnode);
-	 }
-	 else
-	 {
-	 p = contigsequence.size();
-	 templength = getlrlengthreverse(p - q, tempsimilarity);
-	 sumsimilarity += tempsimilarity;
-	 if (isfirst)
-	 {
-	 subcontig.Nspace = new vector<Nspasenode>;
-	 isfirst = false;
-	 }
-	 tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
-	 readedbase += p - q - numoflines(contigsequence, q, p - 1);
-	 tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
-	 tempnode.longreadtailindex = subcontig.longreadtailindex - sumlength;
-	 tempnode.longreadheadindex = subcontig.longreadtailindex - sumlength - templength + 1;
-	 sumlength += templength;
-	 subcontig.Nspace->push_back(tempnode);
-	 }
-	 q = p;
-	 }
-	 if (q != contigsequence.size())
-	 {*/
-	p = contigsequence.size();
-	sumlength += getlrlengthreverse(p - q, tempsimilarity);
-	sumsimilarity += tempsimilarity;
-//	}
+	while ((p = contigsequence.find('N', p)) != string::npos)
+	{
+		if (p != 0)
+		{
+			sumlength += getlrlengthreverse(p - q, tempsimilarity);
+			readedbase += p - q - numoflines(contigsequence, q, p - 1);
+		}
+		q = p;
+		sumsimilarity += tempsimilarity;
+		if ((p = contigsequence.find_first_not_of('N', p)) != string::npos)
+		{
+			templength = getlrlengthreverse(p - q, tempsimilarity);
+			sumsimilarity += tempsimilarity;
+			if (isfirst)
+			{
+				subcontig.Nspace = new vector<Nspasenode>;
+				isfirst = false;
+			}
+			tempnode.longreadname = this->longreadname;
+			tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
+			readedbase += p - q - numoflines(contigsequence, q, p - 1);
+			tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
+			tempnode.longreadtailindex = subcontig.longreadtailindex - sumlength;
+			tempnode.longreadheadindex = subcontig.longreadtailindex - sumlength - templength + 1;
+			tempnode.rawlongreadheadindex = tempnode.longreadheadindex;
+			tempnode.rawlongreadtailindex = tempnode.longreadtailindex;
+			subcontig.Nspace->push_back(tempnode);
+		}
+		else
+		{
+			p = contigsequence.size();
+			templength = getlrlengthreverse(p - q, tempsimilarity);
+			sumsimilarity += tempsimilarity;
+			if (isfirst)
+			{
+				subcontig.Nspace = new vector<Nspasenode>;
+				isfirst = false;
+			}
+			tempnode.longreadname = this->longreadname;
+			tempnode.contigheadindex = subcontig.headindex + subcontig.headoffset + readedbase;
+			readedbase += p - q - numoflines(contigsequence, q, p - 1);
+			tempnode.contigtailindex = subcontig.headindex + subcontig.headoffset + readedbase - 1;
+			tempnode.longreadtailindex = subcontig.longreadtailindex - sumlength;
+			tempnode.longreadheadindex = subcontig.longreadtailindex - sumlength - templength + 1;
+			tempnode.rawlongreadheadindex = tempnode.longreadheadindex;
+			tempnode.rawlongreadtailindex = tempnode.longreadtailindex;
+			sumlength += templength;
+			subcontig.Nspace->push_back(tempnode);
+		}
+		q = p;
+	}
+	if (q != contigsequence.size())
+	{
+		p = contigsequence.size();
+		sumlength += getlrlengthreverse(p - q, tempsimilarity);
+		sumsimilarity += tempsimilarity;
+	}
 	subcontig.similarity = sumsimilarity;
 	return sumlength;
 }
@@ -1331,6 +1342,7 @@ bool CSubUndigraph::getEdges()
 hash_map<pair<unsigned long, unsigned long>, unsigned short, map_hash, map_equal> CUndigraph::graph[3];
 vector<CSubUndigraph> CUndigraph::subundigraphs;
 vector<vector<CSubcontig> > CSubUndigraph::contiglist;
+vector<Nnodeforsort> CUndigraph::Nnodes;
 string CSubUndigraph::lralignedseq;
 string CSubUndigraph::matchpattern;
 string CSubUndigraph::ctalignedseq;
@@ -1523,6 +1535,11 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	else
 		return false;
 	return true;
+}
+
+inline bool CUndigraph::comContigName(Nnodeforsort first, Nnodeforsort second)
+{
+	return first.me->contigname < second.me->contigname;
 }
 
 void CUndigraph::MakeUndigraph(ifstream& alignfile)
@@ -2352,6 +2369,7 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath, bool &hasre
 	vector<pair<int, bool> > sum;
 	int consume;
 	vector<CMyVectorInt>::iterator it;
+	int counter = 0;
 	for (it = ppath.begin(); it != ppath.end(); it++)
 	{
 		sum.push_back(pair<int, bool>(0, false));
@@ -2406,15 +2424,20 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath, bool &hasre
 				}
 				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= 2)
 				{
-					sum.back().second = true;
+					counter++;
+					if (counter >= 2)
+						sum.back().second = true;
 				}
 				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= 2)
 				{
-					sum.back().second = true;
+					counter++;
+					if (counter >= 2)
+						sum.back().second = true;
 				}
 				sum.back().first += consume;
 			}
 		}
+		counter = 0;
 	}
 	int r = 0;
 	int tempsum = sum[0].first;
@@ -2610,114 +2633,114 @@ void Ccorrector::docorrect(int subundigraphindex, int ppathindex, ofstream &corr
 			do
 			{
 
-				/*if (removeN == true && undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace != NULL)
-				 {
-				 if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.strand == '+')
-				 {
-				 vector<Nspasenode>::iterator it = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->begin();
-				 bool firsttime = true;
-				 while (it != undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->end())
-				 {
-				 if (it->longreadheadindex > undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadheadindex)
-				 {
-				 i = j + 1;
-				 j = it->longreadheadindex - 1;
-				 if (firsttime == true)
-				 {
-				 correctedstr += upper(
-				 GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-				 undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex
-				 + undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headoffset, it->contigheadindex - 1,
-				 contigbuffer));
-				 firsttime = false;
-				 }
-				 else
-				 correctedstr += upper(
-				 GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-				 (it - 1)->contigtailindex + 1, it->contigheadindex - 1, contigbuffer));
-				 }
-				 firsttime = false;
-				 i = j + 1;
-				 j = it->longreadtailindex;
-				 temp = upper(GetACut2(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j, longreadbuffer));
-				 correctedstr += temp;
-				 it++;
-				 }
-				 if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->back().contigtailindex
-				 < undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex)
-				 {
-				 i = j + 1;
-				 j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
-				 correctedstr += upper(
-				 GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-				 undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->back().contigtailindex + 1,
-				 undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex
-				 - undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailoffset, contigbuffer));
-				 }
-				 }
-				 else
-				 {
-				 vector<Nspasenode>::iterator it = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->end() - 1;
-				 bool firsttime = true;
-				 while (it != undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->begin() - 1)
-				 {
-				 if (it->longreadheadindex > undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadheadindex)
-				 {
-				 i = j + 1;
-				 j = it->longreadheadindex - 1;
-				 if (firsttime == true)
-				 {
-				 temp = upper(
-				 GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-				 it->contigtailindex + 1,
-				 undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex
-				 - undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailoffset, contigbuffer));
-				 firsttime = false;
-				 }
-				 else
-				 temp = upper(
-				 GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-				 it->contigtailindex + 1, (it + 1)->contigheadindex - 1, contigbuffer));
-				 }
-				 firsttime = false;
-				 correctedstr += changetoreverse(temp);
-				 i = j + 1;
-				 j = it->longreadtailindex;
-				 temp = upper(GetACut2(lrfilename, lrhm[undigraph.subundigraphs[subundigraphindex].longreadname].index, i, j, longreadbuffer));
-				 correctedstr += changetoreverse(temp);
-				 it--;
-				 }
-				 if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->front().contigheadindex
-				 > undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex)
-				 {
-				 i = j + 1;
-				 j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
-				 temp = upper(
-				 GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-				 undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex
-				 + undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headoffset,
-				 undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->front().contigheadindex - 1, contigbuffer));
-				 correctedstr += changetoreverse(temp);
-				 }
-				 }
-				 subcontigindex--;
-				 }
-				 else
-				 {*/
-				i = j + 1;
-				j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
-				temp = upper(
-						GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
-								undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex
-										+ undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headoffset,
-								undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex
-										- undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailoffset, contigbuffer));
-				if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.strand == '-')
-					correctedstr += changetoreverse(temp);
+				if (removeN == true && undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace != NULL)
+				{
+					if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.strand == '+')
+					{
+						vector<Nspasenode>::iterator it = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->begin();
+						bool firsttime = true;
+						while (it != undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->end())
+						{
+							if (it->longreadheadindex > undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadheadindex)
+							{
+								i = j + 1;
+								j = it->rawlongreadheadindex - 1;
+								if (firsttime == true)
+								{
+									correctedstr += upper(
+											GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+													undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex
+															+ undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headoffset, it->contigheadindex - 1,
+													contigbuffer));
+									firsttime = false;
+								}
+								else
+									correctedstr += upper(
+											GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+													(it - 1)->contigtailindex + 1, it->contigheadindex - 1, contigbuffer));
+							}
+							firsttime = false;
+							i = j + 1;
+							j = it->rawlongreadtailindex;
+							temp = upper(GetACut2(lrfilename, lrhm[it->longreadname].index, it->longreadheadindex, it->longreadtailindex, longreadbuffer));
+							correctedstr += temp;
+							it++;
+						}
+						if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->back().contigtailindex
+								< undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex)
+						{
+							i = j + 1;
+							j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
+							correctedstr += upper(
+									GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+											undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->back().contigtailindex + 1,
+											undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex
+													- undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailoffset, contigbuffer));
+						}
+					}
+					else
+					{
+						vector<Nspasenode>::iterator it = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->end() - 1;
+						bool firsttime = true;
+						while (it != undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->begin() - 1)
+						{
+							if (it->longreadheadindex > undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadheadindex)
+							{
+								i = j + 1;
+								j = it->rawlongreadheadindex - 1;
+								if (firsttime == true)
+								{
+									temp = upper(
+											GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+													it->contigtailindex + 1,
+													undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex
+															- undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailoffset, contigbuffer));
+									firsttime = false;
+								}
+								else
+									temp = upper(
+											GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+													it->contigtailindex + 1, (it + 1)->contigheadindex - 1, contigbuffer));
+							}
+							firsttime = false;
+							correctedstr += changetoreverse(temp);
+							i = j + 1;
+							j = it->rawlongreadtailindex;
+							temp = upper(GetACut2(lrfilename, lrhm[it->longreadname].index, it->longreadheadindex, it->longreadtailindex, longreadbuffer));
+							correctedstr += changetoreverse(temp);
+							it--;
+						}
+						if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->front().contigheadindex
+								> undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex)
+						{
+							i = j + 1;
+							j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
+							temp = upper(
+									GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+											undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex
+													+ undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headoffset,
+											undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.Nspace->front().contigheadindex - 1, contigbuffer));
+							correctedstr += changetoreverse(temp);
+						}
+					}
+					subcontigindex--;
+				}
 				else
-					correctedstr += temp;
-				subcontigindex--;
-				//		}
+				{
+					i = j + 1;
+					j = undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadtailindex;
+					temp = upper(
+							GetACut2(ctfilename, cthm[undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.contigname].index,
+									undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headindex
+											+ undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.headoffset,
+									undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailindex
+											- undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.tailoffset, contigbuffer));
+					if (undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.strand == '-')
+						correctedstr += changetoreverse(temp);
+					else
+						correctedstr += temp;
+					subcontigindex--;
+				}
 			} while (subcontigindex > 0 && undigraph.subundigraphs[subundigraphindex].Subconitglist[ppath[ppathindex][subcontigindex]].subcontig.longreadheadindex == j + 1);
 		}
 		i = j + 1;
@@ -3016,20 +3039,128 @@ void parameterAnalyzer(int argc, char* argv[])
 	}
 }
 
+void CUndigraph::replaceN()
+{
+	int sum = 0;
+	vector<CSubUndigraph>::iterator it1;
+	for (it1 = subundigraphs.begin(); it1 != subundigraphs.end(); it1++)
+	{
+		vector<CSubUndigraph::CSubcontigEx>::iterator it2;
+		for (it2 = it1->Subconitglist.begin(); it2 != it1->Subconitglist.end(); it2++)
+		{
+			if (it2->subcontig.Nspace != NULL)
+			{
+				Nnodeforsort temp;
+				temp.me = &(it2->subcontig);
+				Nnodes.push_back(temp);
+			}
+		}
+	}
+	if (Nnodes.empty())
+		return;
+	sort(Nnodes.begin(), Nnodes.end(), comContigName);
+	vector<Nnodeforsort>::iterator it2;
+	vector<Nspasenode>::iterator it3, it4;
+	for (it2 = Nnodes.begin(); it2 != Nnodes.end(); it2++)
+	{
+		for (it3 = it2->me->Nspace->begin() + 1; it3 != it2->me->Nspace->end(); it3++)
+		{
+			if (it3->contigheadindex == (it3 - 1)->contigtailindex + 1)
+			{
+				(it3 - 1)->contigtailindex = it3->contigtailindex;
+				if ((it3 - 1)->longreadheadindex > it3->longreadheadindex)
+					(it3 - 1)->longreadheadindex = it3->longreadheadindex;
+				if ((it3 - 1)->longreadtailindex < it3->longreadtailindex)
+					(it3 - 1)->longreadtailindex = it3->longreadtailindex;
+				it2->me->Nspace->erase(it3);
+				it3--;
+			}
+		}
+	}
+	string contigname = Nnodes.front().me->contigname;
+	vector<Nspasenode> recorded;
+	bool found = false;
+	for (it3 = Nnodes.front().me->Nspace->begin(); it3 != Nnodes.front().me->Nspace->end(); it3++)
+	{
+		recorded.push_back(*it3);
+	}
+	for (it2 = Nnodes.begin() + 1; it2 != Nnodes.end(); it2++)
+	{
+		if (it2->me->contigname == contigname)
+		{
+			for (it3 = it2->me->Nspace->begin(); it3 != it2->me->Nspace->end(); it3++)
+			{
+				for (it4 = recorded.begin(); it4 != recorded.end(); it4++)
+				{
+					if (it3->contigheadindex == it4->contigheadindex || it3->contigtailindex == it4->contigtailindex)
+					{
+						if (it3->contigheadindex == it4->contigheadindex && it3->contigtailindex == it4->contigtailindex)
+						{
+							found = true;
+							break;
+						}
+						else
+						{
+							cerr << "UNKNOWN ERROR" << endl;
+/*							cerr << "it3->contigheadindex" << it3->contigheadindex << endl;
+							cerr << "it4->contigheadindex" << it4->contigheadindex << endl;
+							cerr << "it3->contigtailindex" << it3->contigtailindex << endl;
+							cerr << "it4->contigtailindex" << it4->contigtailindex << endl;
+							cerr << "it3->longreadname = " << it3->longreadname << endl;
+							cerr << "it4->longreadname = " << it4->longreadname << endl;
+							cerr << "it2->contigname = " << it2->me->contigname << endl;
+							cerr << "contigname = " << contigname << endl;*/
+							exit(-1);
+						}
+					}
+
+				}
+				if (found == false)
+				{
+					recorded.push_back(*it3);
+				}
+				else
+				{
+/*					cerr << "it3->longreadheadindex = " << it3->longreadheadindex << endl;
+					cerr << "it4->longreadheadindex = " << it4->longreadheadindex << endl;
+					cerr << "it3->longreadtailindex = " << it3->longreadtailindex << endl;
+					cerr << "it4->longreadtailindex = " << it4->longreadtailindex << endl;
+					cerr << "it3->longreadname = " << it3->longreadname << endl;
+					cerr << "it4->longreadname = " << it4->longreadname << endl << endl;*/
+					it3->longreadheadindex = it4->longreadheadindex;
+					it3->longreadtailindex = it4->longreadtailindex;
+					it3->longreadname = it4->longreadname;
+					found = false;
+				}
+			}
+		}
+		else
+		{
+			contigname = it2->me->contigname;
+			recorded.clear();
+			for (it3 = it2->me->Nspace->begin(); it3 != it2->me->Nspace->end(); it3++)
+			{
+				recorded.push_back(*it3);
+			}
+		}
+	}
+	cerr << sum << endl;
+}
+
 int main(int argc, char *argv[])
 {
 	system("date");
 	std::ios::sync_with_stdio(false);
 	logfilename = "log.txt";
 	subcontigfilename = "subcontigs.fa";
-	buffersize = 10000000;
+	buffersize = 4000000000;
 	preprocess = false;
 	preprocess_threshold = 4;
 	bestn = 4;
 	max_support = 0;
 	fixed_max_support = false;
 	iteration = false;
-	removeN = false;
+	removeN = true;
 	repeatfree = false;
 	outputpath = "./";
 	prefix = "HiBAM";
@@ -3115,6 +3246,7 @@ int main(int argc, char *argv[])
 	else
 		CUndigraph::MakeUndigraph(alignfile);
 	alignfile.close();
+	CUndigraph::replaceN();
 	end = time(NULL);
 	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
