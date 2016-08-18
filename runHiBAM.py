@@ -17,9 +17,6 @@ parser.add_argument('-l', '--log', help="System log to print.(no)", action='stor
 args = parser.parse_args()
 
 # Default Parameters#####################################
-contig_path = '/rhome/llan/bigdata/HiBAM/e-coli/shortbasetrimed/soap/ecoli_graph_prefix.scafSeq'
-long_read_path = '/rhome/llan/bigdata/HiBAM/e-coli/faultlongread.fa'
-short_read_path = '/rhome/llan/bigdata/HiBAM/e-coli/shortbasetrimed/first+second.fasta'
 temp_dir = './temp'
 output_dir = './output'
 prefix = 'HiBAM'
