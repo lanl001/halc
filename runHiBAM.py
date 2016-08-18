@@ -222,7 +222,7 @@ if start_from_step <= 5:
 		os.mkdir(temp_dir + '/step5')
 
 	trim_command = 'Trimmer -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + '/' + prefix + '.trim.fa'
-	trim_command += ' 1>' + temp_dir + '/step5/trim.out ' + '2>' + temp_dir + '/step3/trim.err'
+	trim_command += ' 1>' + temp_dir + '/step5/trim.out ' + '2>' + temp_dir + '/step5/trim.err'
 	print 'Running command: ' + trim_command
 	err = os.system(trim_command)
 	if err != 0:
