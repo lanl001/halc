@@ -91,14 +91,14 @@ if start_from_step <= 2:
 		outfile_name = 'blasrresult-%03d.m5' % i
 		if repeat_free_mode:
 			if args.threads:
-				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 -out ' + temp_dir + '/step2/' + outfile_name + ' -maxScore 2000 -minMatch 8 -minAlnLength 300 -nCandidates 30 -bestn 20 -nproc ' + args.threads
+				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 300 --nCandidates 30 --bestn 20 --nproc ' + args.threads
 			else:
-				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 -out ' + temp_dir + '/step2/' + outfile_name + ' -maxScore 2000 -minMatch 8 -minAlnLength 300 -nCandidates 30 -bestn 20 -nproc 4'
+				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 300 --nCandidates 30 --bestn 20 --nproc 4'
 		else:
 			if args.threads:
-				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 -out ' + temp_dir + '/step2/' + outfile_name + ' -maxScore 2000 -minMatch 8 -minAlnLength 15 -nCandidates 30 -bestn 20 -nproc ' + args.threads
+				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 15 --nCandidates 30 --bestn 20 --nproc ' + args.threads
 			else:
-				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 -out ' + temp_dir + '/step2/' + outfile_name + ' -maxScore 2000 -minMatch 8 -minAlnLength 15 -nCandidates 30 -bestn 20 -nproc 4'
+				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 15 --nCandidates 30 --bestn 20 --nproc 4'
 		blasr_command += ' 1>' + temp_dir + '/step2/blasr.out ' + '2>' + temp_dir + '/step2/blasr.err'
 
 		print 'Running command: ' + blasr_command
