@@ -3246,7 +3246,7 @@ int main(int argc, char *argv[])
 	else
 		CUndigraph::MakeUndigraph(alignfile);
 	alignfile.close();
-	CUndigraph::replaceN();
+//	CUndigraph::replaceN();
 	end = time(NULL);
 	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
