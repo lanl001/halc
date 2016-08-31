@@ -50,6 +50,16 @@
 
 #define DEF_MIN_REGION_LG 100
 #define MAX_READ_LEN 500000
+#define BASE_PER_LINE 70
+
+std::string Realign(std::string source)
+{
+	for (unsigned int i = BASE_PER_LINE; i < source.length(); i += BASE_PER_LINE + 1)
+	{
+		source.insert(i, 1, '\n');
+	}
+	return source;
+}
 
 void usage(char *prog)
 {
@@ -240,7 +250,7 @@ int main(int argc, char* argv[])
 							outfile << title + numbuf << std::endl;
 						else
 							outfile << title + numbuf + ' ' + comment << std::endl;
-						outfile << buffer << std::endl;
+						outfile << Realign(buffer) << std::endl;
 						part++;
 					}
 					ucstart = NULL; // reinitialise the start of an uppercase region
@@ -260,6 +270,7 @@ int main(int argc, char* argv[])
 					outfile << title + numbuf << std::endl;
 				else
 					outfile << title + numbuf + ' ' + comment << std::endl;
+				outfile << Realign(buffer) << std::endl;
 			}
 			ucstart = NULL;
 		}
