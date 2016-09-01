@@ -63,7 +63,7 @@ if start_from_step <= 1:
 		print 'ERROR:' + 'Fail to run SeqChunker:' + os.strerror(err)
 		exit(-1)
 
-	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb*').readlines())
+	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb-*').readlines())
 	print str(line_count) + ' files created'
 
 	print '''
