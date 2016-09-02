@@ -2425,13 +2425,13 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath, bool &hasre
 				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= 2)
 				{
 					counter++;
-					if (counter >= 2)
+					if (counter >= 3)
 						sum.back().second = true;
 				}
 				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= 2)
 				{
 					counter++;
-					if (counter >= 2)
+					if (counter >= 3)
 						sum.back().second = true;
 				}
 				sum.back().first += consume;
