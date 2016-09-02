@@ -63,7 +63,7 @@ if start_from_step <= 1:
 		print 'ERROR:' + 'Fail to run SeqChunker:' + os.strerror(err)
 		exit(-1)
 
-	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb-*').readlines())
+	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb-....fa').readlines())
 	print str(line_count) + ' files created'
 
 	print '''
@@ -85,7 +85,7 @@ if start_from_step <= 2:
 	else:
 		os.mkdir(temp_dir + '/step2')
 
-	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb*').readlines())
+	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb-....fa').readlines())
 	for i in range(1, line_count + 1):
 		longread_name = 'pb-%03d.fa' % i
 		outfile_name = 'blasrresult-%03d.m5' % i
@@ -124,7 +124,7 @@ if start_from_step <= 3:
 	else:
 		os.mkdir(temp_dir + '/step3')
 
-	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb*').readlines())
+	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb-....fa').readlines())
 	for i in range(1, line_count + 1):
 		longread_name = 'pb-%03d' % i
 		m5filename = 'blasrresult-%03d.m5' % i
