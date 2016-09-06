@@ -204,7 +204,8 @@ int main(int argc, char* argv[])
 		comment.clear();
 		if(inbuffer[pos] != '\n')
 			comment = getline(inbuffer, pos, size);
-		read = getSequence(inbuffer, pos, read_len, size).c_str();
+		std::string tempstr = getSequence(inbuffer, pos, read_len, size);
+		read = tempstr.c_str();
 		int firstUC = -1, lastUC = -1; // first and last position of uppercase nuc in the input seq
 		for (int i = 0; i < read_len; i++)
 		{ // scan current input sequence
