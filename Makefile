@@ -1,7 +1,7 @@
 # FLAGS
-CXXFLAGS = -fopenmp -g#-Wall  # put compiler settings here
+CXXFLAGS = -fopenmp#-Wall  # put compiler settings here
 # put linker settings here
-CXX	= g++
+CXX	= g++ -g
 RM  	= rm -f 
 MV	= mv
 CP	= cp
