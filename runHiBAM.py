@@ -11,6 +11,7 @@ parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary differe
 parser.add_argument('-a', '--accurate',  help="Accurate construction of the contig graph.(DEPRECATED)(yes)", action='store_true', default=True)
 parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int)
 parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4)
+parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(19)", default=19)
 parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)")
 parser.add_argument('-l', '--log', help="System log to print.(no)", action='store_true', default=False)
 
@@ -131,14 +132,12 @@ if start_from_step <= 3:
 		HiBAM_command = 'HiBAM ' + temp_dir + '/step2/' + m5filename + ' ' + contig_path + ' ' + temp_dir + '/step1/' + longread_name + '.fa -o ' + temp_dir + '/step3/' + ' -p ' + longread_name
 		if args.threads:
 			HiBAM_command += ' -t ' + args.threads
-		if args.boundary:
-			HiBAM_command += ' -b ' + str(args.boundary)
-		if args.width:
-			HiBAM_command += ' -w ' + str(args.width)
 		if args.coverage:
 			HiBAM_command += ' -c ' + str(args.coverage)
 		if args.repeatfree:
 			HiBAM_command += ' -r'
+		HiBAM_command += ' -b ' + str(args.boundary)
+		HiBAM_command += ' -w ' + str(args.width)
 		HiBAM_command += ' 1>' + temp_dir + '/step3/HiBAM.out ' + '2>' + temp_dir + '/step3/HiBAM.err'
 		print 'Running command: ' + HiBAM_command
 		err = os.system(HiBAM_command)
@@ -184,7 +183,8 @@ if start_from_step <= 4 and not repeat_free_mode:
 	else:
 		os.mkdir(temp_dir + '/step4')
 
-	LoRDEC_command = 'lordec-correct -2 ' + short_read_path + ' -k 19 -s 3 -i ' + temp_dir + '/step3/' + prefix + '.repeatused.fa' + ' -o ' + temp_dir + '/step4/' + prefix + '.corrected.fa'
+	LoRDEC_command = 'lordec-correct -2 ' + short_read_path + ' -s 3 -i ' + temp_dir + '/step3/' + prefix + '.repeatused.fa' + ' -o ' + temp_dir + '/step4/' + prefix + '.corrected.fa'
+	LoRDEC_command += ' -k ' + args.kmer
 	LoRDEC_command += ' 1>' + temp_dir + '/step4/LoRDEC.out ' + '2>' + temp_dir + '/step3/LoRDEC.err'
 	print 'Running command: ' + LoRDEC_command
 
