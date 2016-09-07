@@ -29,18 +29,23 @@ if os.path.exists(temp_dir + '/step1'):
 		if os.path.exists(temp_dir + '/step3'):
 			if os.path.exists(temp_dir + '/step4'):
 				if os.path.exists(temp_dir + '/step5'):
+					print 'WARNING:' + temp_dir + '/step5' + ' was found. Automatically started from step5'
 					shutil.rmtree(temp_dir + '/step5')
 					start_from_step = 5
 				else:
+					print 'WARNING:' + temp_dir + '/step4' + ' was found. Automatically started from step4'
 					shutil.rmtree(temp_dir + '/step4')
 					start_from_step = 4
 			else:
+				print 'WARNING:' + temp_dir + '/step3' + ' was found. Automatically started from step3'
 				shutil.rmtree(temp_dir + '/step3')
 				start_from_step = 3
 		else:
+			print 'WARNING:' + temp_dir + '/step2' + ' was found. Automatically started from step2'
 			shutil.rmtree(temp_dir + '/step2')
 			start_from_step = 2
 	else:
+		print 'WARNING:' + temp_dir + '/step1' + ' was found. Automatically started from step1'
 		shutil.rmtree(temp_dir + '/step1')
 		start_from_step = 1
 else:
