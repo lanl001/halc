@@ -1,5 +1,6 @@
 import os
 import argparse
+import shutil
 
 parser = argparse.ArgumentParser(description='runHiBAM.py')
 
@@ -23,8 +24,27 @@ output_dir = './output'
 prefix = 'HiBAM'
 repeat_free_mode = False
 
-
-start_from_step = 1
+if os.path.exists(temp_dir + '/step1'):
+	if os.path.exists(temp_dir + '/step2'):
+		if os.path.exists(temp_dir + '/step3'):
+			if os.path.exists(temp_dir + '/step4'):
+				if os.path.exists(temp_dir + '/step5'):
+					shutil.rmtree(temp_dir + '/step5')
+					start_from_step = 5
+				else:
+					shutil.rmtree(temp_dir + '/step4')
+					start_from_step = 4
+			else:
+				shutil.rmtree(temp_dir + '/step3')
+				start_from_step = 3
+		else:
+			shutil.rmtree(temp_dir + '/step2')
+			start_from_step = 2
+	else:
+		shutil.rmtree(temp_dir + '/step1')
+		start_from_step = 1
+else:
+	start_from_step = 1
 # Parameters Analyzing###################################
 long_read_path = args.long_read_path
 contig_path = args.contig_path
