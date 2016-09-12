@@ -26,6 +26,7 @@
 
 #define DISPLAY_NUM 10000
 #define BASE_PER_LINE 70
+#define N_REPLACING_MODE 0
 
 using namespace __gnu_cxx;
 using namespace std;
@@ -3041,7 +3042,6 @@ void parameterAnalyzer(int argc, char* argv[])
 
 void CUndigraph::replaceN()
 {
-	int sum = 0;
 	vector<CSubUndigraph>::iterator it1;
 	for (it1 = subundigraphs.begin(); it1 != subundigraphs.end(); it1++)
 	{
@@ -3102,14 +3102,6 @@ void CUndigraph::replaceN()
 						else
 						{
 							cerr << "UNKNOWN ERROR" << endl;
-/*							cerr << "it3->contigheadindex" << it3->contigheadindex << endl;
-							cerr << "it4->contigheadindex" << it4->contigheadindex << endl;
-							cerr << "it3->contigtailindex" << it3->contigtailindex << endl;
-							cerr << "it4->contigtailindex" << it4->contigtailindex << endl;
-							cerr << "it3->longreadname = " << it3->longreadname << endl;
-							cerr << "it4->longreadname = " << it4->longreadname << endl;
-							cerr << "it2->contigname = " << it2->me->contigname << endl;
-							cerr << "contigname = " << contigname << endl;*/
 							exit(-1);
 						}
 					}
@@ -3121,12 +3113,6 @@ void CUndigraph::replaceN()
 				}
 				else
 				{
-/*					cerr << "it3->longreadheadindex = " << it3->longreadheadindex << endl;
-					cerr << "it4->longreadheadindex = " << it4->longreadheadindex << endl;
-					cerr << "it3->longreadtailindex = " << it3->longreadtailindex << endl;
-					cerr << "it4->longreadtailindex = " << it4->longreadtailindex << endl;
-					cerr << "it3->longreadname = " << it3->longreadname << endl;
-					cerr << "it4->longreadname = " << it4->longreadname << endl << endl;*/
 					it3->longreadheadindex = it4->longreadheadindex;
 					it3->longreadtailindex = it4->longreadtailindex;
 					it3->longreadname = it4->longreadname;
@@ -3144,7 +3130,6 @@ void CUndigraph::replaceN()
 			}
 		}
 	}
-	cerr << sum << endl;
 }
 
 int main(int argc, char *argv[])
@@ -3186,6 +3171,7 @@ int main(int argc, char *argv[])
 
 	parameterAnalyzer(argc, argv);
 
+	cerr << "N_REPLACING_MODE = " << N_REPLACING_MODE << endl;
 	clock_t start0 = time(NULL);
 	clock_t start = start0;
 	cerr << endl << "Making hashmap for long reads..." << endl;
@@ -3246,7 +3232,8 @@ int main(int argc, char *argv[])
 	else
 		CUndigraph::MakeUndigraph(alignfile);
 	alignfile.close();
-//	CUndigraph::replaceN();
+	if(N_REPLACING_MODE == 1)
+		CUndigraph::replaceN();
 	end = time(NULL);
 	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
