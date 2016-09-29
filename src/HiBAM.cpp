@@ -3040,6 +3040,27 @@ void parameterAnalyzer(int argc, char* argv[])
 	}
 }
 
+void CUndigraph::findanveragesupport()
+{
+	double sum = 0;
+	long counter = 0;
+	hash_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal>::iterator it;
+	for(int i = 0 ; i < 3 ; i++)
+	{
+		for(it = graph[i].begin() ; it != graph[i].end() ; it++)
+		{
+			if(it->second != 65535)
+			{
+				sum += it->second;
+				counter++;
+			}
+		}
+	}
+	cerr << counter << endl;
+	cerr << sum << endl;
+	cerr << sum/counter << endl;
+}
+
 void CUndigraph::replaceN()
 {
 	vector<CSubUndigraph>::iterator it1;
@@ -3232,8 +3253,9 @@ int main(int argc, char *argv[])
 	else
 		CUndigraph::MakeUndigraph(alignfile);
 	alignfile.close();
-	if(N_REPLACING_MODE == 1)
+	if (N_REPLACING_MODE == 1)
 		CUndigraph::replaceN();
+	CUndigraph::findanveragesupport();
 	end = time(NULL);
 	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
