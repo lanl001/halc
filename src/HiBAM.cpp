@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <cmath>
 
 #define DISPLAY_NUM 10000
 #define BASE_PER_LINE 70
@@ -1344,6 +1345,7 @@ hash_map<pair<unsigned long, unsigned long>, unsigned short, map_hash, map_equal
 vector<CSubUndigraph> CUndigraph::subundigraphs;
 vector<vector<CSubcontig> > CSubUndigraph::contiglist;
 vector<Nnodeforsort> CUndigraph::Nnodes;
+double CUndigraph::averagesupport;
 string CSubUndigraph::lralignedseq;
 string CSubUndigraph::matchpattern;
 string CSubUndigraph::ctalignedseq;
@@ -2423,13 +2425,13 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath, bool &hasre
 				{
 					consume = 0;
 				}
-				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= 2)
+				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= CUndigraph::averagesupport)
 				{
 					counter++;
 					if (counter >= 3)
 						sum.back().second = true;
 				}
-				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= 2)
+				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= CUndigraph::averagesupport)
 				{
 					counter++;
 					if (counter >= 3)
@@ -3058,7 +3060,9 @@ void CUndigraph::findanveragesupport()
 	}
 	cerr << counter << endl;
 	cerr << sum << endl;
-	cerr << sum/counter << endl;
+	averagesupport = ceil(sum/counter);
+	cerr << averagesupport << endl;
+
 }
 
 void CUndigraph::replaceN()
