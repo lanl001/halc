@@ -1345,7 +1345,7 @@ hash_map<pair<unsigned long, unsigned long>, unsigned short, map_hash, map_equal
 vector<CSubUndigraph> CUndigraph::subundigraphs;
 vector<vector<CSubcontig> > CSubUndigraph::contiglist;
 vector<Nnodeforsort> CUndigraph::Nnodes;
-double CUndigraph::averagesupport;
+double CUndigraph::anveragesupport;
 string CSubUndigraph::lralignedseq;
 string CSubUndigraph::matchpattern;
 string CSubUndigraph::ctalignedseq;
@@ -2425,13 +2425,13 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath, bool &hasre
 				{
 					consume = 0;
 				}
-				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= CUndigraph::averagesupport)
+				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= CUndigraph::anveragesupport)
 				{
 					counter++;
 					if (counter >= 3)
 						sum.back().second = true;
 				}
-				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= CUndigraph::averagesupport)
+				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= CUndigraph::anveragesupport)
 				{
 					counter++;
 					if (counter >= 3)
@@ -3060,8 +3060,8 @@ void CUndigraph::findanveragesupport()
 	}
 	cerr << counter << endl;
 	cerr << sum << endl;
-	averagesupport = ceil(sum/counter);
-	cerr << averagesupport << endl;
+	anveragesupport = ceil(sum/counter);
+	cerr <<"anveragesupport= "<< anveragesupport << endl;
 
 }
 

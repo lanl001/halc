@@ -229,7 +229,7 @@ public:
 	MakeUndigraph(std::ifstream& alignfile);
 	static std::vector<CSubUndigraph> subundigraphs;
 	static std::vector<Nnodeforsort> Nnodes;
-	static double averagesupport;
+	static double anveragesupport;
 	static void replaceN();
 	static void findanveragesupport();
 	static inline bool comContigName(Nnodeforsort first, Nnodeforsort second);
