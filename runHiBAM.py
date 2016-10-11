@@ -12,7 +12,7 @@ parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary differe
 parser.add_argument('-a', '--accurate',  help="Accurate construction of the contig graph.(DEPRECATED)(yes)", action='store_true', default=True)
 parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int)
 parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4)
-parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(19)", default='19')
+parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(19)", default='23')
 parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)")
 parser.add_argument('-l', '--log', help="System log to print.(no)", action='store_true', default=False)
 args = parser.parse_args()
