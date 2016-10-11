@@ -1,9 +1,9 @@
 import os
 import argparse
 import shutil
+import datetime
 
 parser = argparse.ArgumentParser(description='runHiBAM.py')
-
 parser.add_argument('long_read_path', metavar='long_read.fa', help="The path to long_read.fa")
 parser.add_argument('contig_path', metavar='contig.fa', help="The path to contig.fa")
 parser.add_argument("-o", "--ordinary",help="Ordinary mode utilizing repeats to make correction. The error correction software LoRDEC and the initial short reads are required to refine the repeat corrected regions. It is exclusive with the -repeat-free option.(yes)")
@@ -15,7 +15,6 @@ parser.add_argument('-w', '--width', help="Maximum width of the dynamic programm
 parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(19)", default='19')
 parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)")
 parser.add_argument('-l', '--log', help="System log to print.(no)", action='store_true', default=False)
-
 args = parser.parse_args()
 
 # Default Parameters#####################################
@@ -64,6 +63,9 @@ if args.ordinary:
 elif args.repeatfree:
 	repeat_free_mode = True
 
+start_time = datetime.datetime.now()
+print start_time
+
 # Step 1 chunk long reads#########################
 if start_from_step <= 1:
 	print'''
@@ -94,7 +96,6 @@ if start_from_step <= 1:
 
 	print '''
 /////STEP 1 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
-
 # Step 2 Run Blasr###############################
 if start_from_step <= 2:
 	print '''
@@ -260,3 +261,8 @@ if start_from_step <= 5:
 		exit(-1)
 	print '''
 /////Finished!!! Results are stored in output folder/////////////////////////////////////////////////////////////////'''
+
+end_time = datetime.datetime.now()
+print end_time
+time_cost = end_time - start_time
+print 'time cost: ' + str(time_cost)
