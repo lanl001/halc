@@ -211,6 +211,7 @@ if start_from_step <= 4 and not repeat_free_mode:
 
 	LoRDEC_command = 'lordec-correct -2 ' + short_read_path + ' -s 3 -i ' + temp_dir + '/step3/' + prefix + '.repeatused.fa' + ' -o ' + temp_dir + '/step4/' + prefix + '.corrected.fa'
 	LoRDEC_command += ' -k ' + args.kmer
+	LoRDEC_command += ' -t ' + args.threads
 	LoRDEC_command += ' 1>' + temp_dir + '/step4/LoRDEC.out ' + '2>' + temp_dir + '/step4/LoRDEC.err'
 	print 'Running command: ' + LoRDEC_command
 
