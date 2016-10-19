@@ -6,25 +6,25 @@
 
 <a name="news"/>
 ### LATEST NEWS
-The HiBAM manuscript has been submitted to Bioinformatics!
+The HALC manuscript has been submitted to Bioinformatics!
 
 <a name="overview"/>
 ### Overview
-HiBAM is a software that makes error correction for long reads with high base maintenance ratio.
+HALC is a software that makes error correction for long reads with high base maintenance ratio.
 
 <a name="copyright"/>
 ###Copy right
-HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic-2.0).
+HALC is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic-2.0).
 
 <a name="manual"/>
 ### Short manual
 1. System requirements
 
-   HiBAM is suitable for 32-bit or 64-bit machines with Linux operating systems. At least 4GB of system memory is recommended for correcting larger data sets.
+   HALC is suitable for 32-bit or 64-bit machines with Linux operating systems. At least 4GB of system memory is recommended for correcting larger data sets.
 
 2. Installation
 
-   Aligner [BLASR](https://github.com/PacificBiosciences/blasr) and error correction software [LoRDEC](http://www.atgc-montpellier.fr/lordec/) (only for -ordinary mode) are required to run HiBAM.
+   Aligner [BLASR](https://github.com/PacificBiosciences/blasr) and error correction software [LoRDEC](http://www.atgc-montpellier.fr/lordec/) (only for -ordinary mode) are required to run HALC.
    * The source files in 'src' and 'thirdparty' folders can be compiled to generate a 'bin' folder by running Makefile: `make all`.
    * Put BLASR, LoRDEC and the 'bin' folder to your $PATH: `export PATH=PATH2BLASR:$PATH` , `export PATH=PATH2LoRDEC:$PATH` and `export PATH=PATH2bin:$PATH`, respectively.
 
@@ -36,7 +36,7 @@ HiBAM is under the [Artistic License 2.0](http://opensource.org/licenses/Artisti
 4. Using AlignGraph
 
    ```
-   runHiBAM.py long_reads.fa contigs.fa [-options|-options]
+   runHALC.py long_reads.fa contigs.fa [-options|-options]
    ```
 
    <p>Options (default value):<br>
