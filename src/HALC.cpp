@@ -6,7 +6,7 @@
 // Description :
 //============================================================================
 
-#include "HiBAM.h"
+#include "HALC.h"
 
 #include <iostream>
 #include <fstream>

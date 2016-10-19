@@ -6,13 +6,13 @@ RM  	= rm -f
 MV	= mv
 CP	= cp
 
-all:HiBAM Splitter Trimmer bin instbin
+all:HALC Splitter Trimmer bin instbin
 
-HiBAM:src/HiBAM.o src/BlasrAdapter.o src/parsingargs.o
-	$(CXX) $(CXXFLAGS) src/HiBAM.o src/BlasrAdapter.o src/parsingargs.o -o HiBAM
+HALC:src/HALC.o src/BlasrAdapter.o src/parsingargs.o
+	$(CXX) $(CXXFLAGS) src/HALC.o src/BlasrAdapter.o src/parsingargs.o -o HALC
 
-HiBAM.o:src/HiBAM.cpp src/HiBAM.h
-	$(CXX) $(CXXFLAGS) -c src/HiBAM.cpp
+HALC.o:src/HALC.cpp src/HALC.h
+	$(CXX) $(CXXFLAGS) -c src/HALC.cpp
 
 BlasrAdapter.o:src/BlasrAdapter.cpp src/BlasrAdapter.h
 	$(CXX) $(CXXFLAGS) -c src/BlasrAdapter.cpp
@@ -36,11 +36,11 @@ bin:
 	mkdir bin
 
 instbin:
-	$(MV) HiBAM Splitter Trimmer bin
+	$(MV) HALC Splitter Trimmer bin
 	$(CP) thirdparty/Chunker thirdparty/SeqChunker-dd thirdparty/SeqChunker-perl thirdparty/SeqChunker-sed thirdparty/interleave thirdparty/interleaved-split bin
 
 clean:
-	$(RM) src/HiBAM.o src/BlasrAdapter.o src/parsingargs.o thirdparty/Splitter.o thirdparty/Trimmer.o
+	$(RM) src/HALC.o src/BlasrAdapter.o src/parsingargs.o thirdparty/Splitter.o thirdparty/Trimmer.o
 
 purge:		clean
 	$(RM) -r bin/
