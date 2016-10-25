@@ -52,7 +52,7 @@ HALC is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic
    Expected long read coverage. If not specified, it can be automatically calculated.<br>
    -w/-width n (4)<br>
    Maximum width of the dynamic programming table.<br>
-   -k/-kmer n (19)<br>
+   -k/-kmer n (25)<br>
    Kmer length for LoRDEC refinement.<br>
    -t/-threads n (auto)<br>
    Number of threads for one process to create. It is automatically set to the number of computing cores.<br>
