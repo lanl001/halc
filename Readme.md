@@ -6,7 +6,7 @@
 
 <a name="news"/>
 ### LATEST NEWS
-The HALC manuscript has been submitted to Bioinformatics!
+The HALC manuscript has been submitted to BMC Bioinformatics!
 
 <a name="overview"/>
 ### Overview
