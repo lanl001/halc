@@ -10,12 +10,12 @@ parser.add_argument('long_read_path', metavar='long_read.fa', help="The path to 
 parser.add_argument('contig_path', metavar='contig.fa', help="The path to contig.fa")
 parser.add_argument("-o", "--ordinary",help="Ordinary mode utilizing repeats to make correction. The error correction software LoRDEC and the initial short reads are required to refine the repeat corrected regions. It is exclusive with the -repeat-free option.(yes)")
 parser.add_argument('-r', "--repeat-free",dest='repeatfree', help="Repeat-free mode without utilizing repeats to make correction. It is exclusive with the -ordinary option.(no)", action='store_true', default=False)
-parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary difference to split the subcontigs.(4)", default=4)
+parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary difference to split the subcontigs.(4)", default=4, choices=xrange(0, 20))
 parser.add_argument('-a', '--accurate',  help="Accurate construction of the contig graph.(DEPRECATED)(yes)", action='store_true', default=True)
-parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int)
-parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4)
-parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(25)", default='25')
-parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)")
+parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int, choices=xrange(1, 65535))
+parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4, choices=xrange(2, 20))
+parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(25)", default=25, type=int, choices=xrange(4, 127))
+parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)", type=int, chioces=xrange(1, 128))
 parser.add_argument('-l', '--log', help="System log to print.(no)", action='store_true', default=False)
 args = parser.parse_args()
 
@@ -56,9 +56,9 @@ long_read_path = args.long_read_path
 contig_path = args.contig_path
 
 if args.ordinary and args.repeatfree:
-	print "Error: '-o' and '-r' can not be set at the same time"
+	print "ERROR: '-o' and '-r' cannot be set at the same time"
 if not (args.ordinary or args.repeatfree):
-	print "Eorror: Either '-o' or '-r' should be set"
+	print "ERROR: Either '-o' or '-r' should be set"
 if args.ordinary:
 	short_read_path = args.ordinary
 	repeat_free_mode = False
@@ -90,7 +90,7 @@ if start_from_step <= 1:
 	err = os.system(Chunker_command)
 
 	if err != 0:
-		print 'ERROR:' + 'Fail to run SeqChunker:' + os.strerror(err)
+		print 'ERROR:' + 'Failed torun SeqChunker:' + os.strerror(err)
 		exit(-1)
 
 	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb-....fa').readlines())
@@ -120,12 +120,12 @@ if start_from_step <= 2:
 		outfile_name = 'blasrresult-%03d.m5' % i
 		if repeat_free_mode:
 			if args.threads:
-				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 300 --nCandidates 30 --bestn 20 --nproc ' + args.threads
+				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 300 --nCandidates 30 --bestn 20 --nproc ' + str(args.threads)
 			else:
 				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 300 --nCandidates 30 --bestn 20 --nproc 4'
 		else:
 			if args.threads:
-				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 15 --nCandidates 30 --bestn 20 --nproc ' + args.threads
+				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 15 --nCandidates 30 --bestn 20 --nproc ' + str(args.threads)
 			else:
 				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 15 --nCandidates 30 --bestn 20 --nproc 4'
 		blasr_command += ' 1>' + temp_dir + '/step2/blasr_' + str(i) + '.out ' + '2>' + temp_dir + '/step2/blasr_' + str(i) + '.err'
@@ -133,7 +133,7 @@ if start_from_step <= 2:
 		print 'Running command: ' + blasr_command
 		err = os.system(blasr_command)
 		if err != 0:
-			print 'ERROR:' + 'Fail to run blasr:' + os.strerror(err)
+			print 'ERROR:' + 'Failed to run blasr:' + os.strerror(err)
 			exit(-1)
 	print '''
 /////STEP 2 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
@@ -159,7 +159,7 @@ if start_from_step <= 3:
 		m5filename = 'blasrresult-%03d.m5' % i
 		HALC_command = 'HALC ' + temp_dir + '/step2/' + m5filename + ' ' + contig_path + ' ' + temp_dir + '/step1/' + longread_name + '.fa -o ' + temp_dir + '/step3/' + ' -p ' + longread_name
 		if args.threads:
-			HALC_command += ' -t ' + args.threads
+			HALC_command += ' -t ' + str(args.threads)
 		if args.coverage:
 			HALC_command += ' -c ' + str(args.coverage)
 		if args.repeatfree:
@@ -170,27 +170,27 @@ if start_from_step <= 3:
 		print 'Running command: ' + HALC_command
 		err = os.system(HALC_command)
 		if err != 0:
-			print 'ERROR:' + 'Fail to run HALC:' + os.strerror(err)
+			print 'ERROR:' + 'Failed to run HALC:' + os.strerror(err)
 			exit(-1)
 
 	cat_command = 'cat ' + temp_dir + '/step3/' + '*.corrected.fa >' + temp_dir + '/step3/' + prefix + '.corrected.fa'
 	err = os.system(cat_command)
 	if err != 0:
-		print 'ERROR:' + 'Fail to combine corrected sequence:' + os.strerror(err)
+		print 'ERROR:' + 'Failed tocombine corrected sequences:' + os.strerror(err)
 		exit(-1)
 
 	if not repeat_free_mode:
 		cat_command = 'cat ' + temp_dir + '/step3/' + '*.repeatused.fa >' + temp_dir + '/step3/' + prefix + '.repeatused.fa'
 		err = os.system(cat_command)
 		if err != 0:
-			print 'ERROR:' + 'Fail to combine corrected sequence:' + os.strerror(err)
+			print 'ERROR:' + 'Failed tocombine corrected sequences:' + os.strerror(err)
 			exit(-1)
 
 	if repeat_free_mode:
 		cp_command = 'cp ' + temp_dir + '/step3/' + prefix + '.corrected.fa ' + output_dir
 		err = os.system(cp_command)
 		if err != 0:
-			print 'ERROR:' + 'Fail to copy corrected sequence to output direction' + os.strerror(err)
+			print 'ERROR:' + 'Failed tocopy corrected sequences to output directory' + os.strerror(err)
 			exit(-1)
 	print '''
 /////STEP 3 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
@@ -212,20 +212,20 @@ if start_from_step <= 4 and not repeat_free_mode:
 		os.mkdir(temp_dir + '/step4')
 
 	LoRDEC_command = 'lordec-correct -2 ' + short_read_path + ' -s 3 -i ' + temp_dir + '/step3/' + prefix + '.repeatused.fa' + ' -o ' + temp_dir + '/step4/' + prefix + '.corrected.fa'
-	LoRDEC_command += ' -k ' + args.kmer
-	LoRDEC_command += ' -T ' + args.threads
+	LoRDEC_command += ' -k ' + str(args.kmer)
+	LoRDEC_command += ' -T ' + str(args.threads)
 	LoRDEC_command += ' 1>' + temp_dir + '/step4/LoRDEC.out ' + '2>' + temp_dir + '/step4/LoRDEC.err'
 	print 'Running command: ' + LoRDEC_command
 
 	err = os.system(LoRDEC_command)
 	if err != 0:
-		print 'ERROR:' + 'Fail to run LoRDEC:' + os.strerror(err)
+		print 'ERROR:' + 'Failed to run LoRDEC:' + os.strerror(err)
 		exit(-1)
 
 	cat_command = 'cat ' + temp_dir + '/step4/' + prefix + '.corrected.fa ' + temp_dir + '/step3/' + prefix + '.corrected.fa >' + output_dir + '/' + prefix + '.corrected.fa'
 	err = os.system(cat_command)
 	if err != 0:
-		print 'ERROR:' + 'Fail to combine corrected sequence:' + os.strerror(err)
+		print 'ERROR:' + 'Failed tocombine corrected sequences:' + os.strerror(err)
 		exit(-1)
 
 	print '''
@@ -252,7 +252,7 @@ if start_from_step <= 5:
 	print 'Running command: ' + trim_command
 	err = os.system(trim_command)
 	if err != 0:
-		print 'ERROR:' + 'Fail to trim corrected sequence:' + os.strerror(err)
+		print 'ERROR:' + 'Failed to trim corrected sequences:' + os.strerror(err)
 		exit(-1)
 
 	split_command = 'Splitter -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + '/' + prefix + '.split.fa'
@@ -260,7 +260,7 @@ if start_from_step <= 5:
 	print 'Running command: ' + split_command
 	err = os.system(split_command)
 	if err != 0:
-		print 'ERROR:' + 'Fail to split corrected sequence:' + os.strerror(err)
+		print 'ERROR:' + 'Failed to split corrected sequences:' + os.strerror(err)
 		exit(-1)
 	print '''
 /////Finished!!! Results are stored in output folder/////////////////////////////////////////////////////////////////'''
@@ -268,4 +268,5 @@ if start_from_step <= 5:
 end_time = datetime.datetime.now()
 print end_time
 time_cost = end_time - start_time
-print 'time cost: ' + str(time_cost)
+print 'Running time: ' + str(time_cost)
+

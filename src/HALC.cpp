@@ -2822,14 +2822,19 @@ void parameterAnalyzer(int argc, char* argv[])
 				}
 				else
 				{
-					preprocess = true;
 					if (it->second.size() == 1)
 					{
+						int preprocess_int;
 						std::stringstream ss;
 						ss << it->second[0];
-						ss >> preprocess_threshold;
+						ss >> preprocess_int;
+						if(preprocess_int > 0)
+						{
+							preprocess = true;
+							preprocess_threshold = preprocess_int;
+							cerr << "boundary = " << preprocess_threshold << endl;
+						}
 					}
-					cerr << "boundary = " << preprocess_threshold << endl;
 				}
 			}
 
@@ -2872,8 +2877,8 @@ void parameterAnalyzer(int argc, char* argv[])
 						std::stringstream ss;
 						ss << it->second[0];
 						ss >> bestn;
+						cerr << "width = " << bestn << endl;
 					}
-					cerr << "width = " << bestn << endl;
 				}
 			}
 
@@ -3203,21 +3208,21 @@ int main(int argc, char *argv[])
 	HashLongRead(longreadfile);
 	longreadfile.close();
 	clock_t end = time(NULL);
-	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
 	cerr << "Making hashmap for contigs..." << endl;
 	HashContig(contigfile);
 	contigfile.close();
 	end = time(NULL);
-	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
 	cerr << "Reading map result..." << endl;
 	ReadAlign(alignfile);
 	Sort();
 	end = time(NULL);
-	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
 	ifstream newalignfile;
@@ -3241,17 +3246,17 @@ int main(int argc, char *argv[])
 			exit(-1);
 		}
 		clock_t end = time(NULL);
-		cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+		cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 		start = end;
 	}
 
 	cerr << "Generating subcontigs..." << endl;
 	GetSubContigs(argv[2]);
 	end = time(NULL);
-	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
-	cerr << "Making graph..." << endl;
+	cerr << "Building graph..." << endl;
 	if (preprocess)
 		CUndigraph::MakeUndigraph(newalignfile);
 	else
@@ -3261,7 +3266,7 @@ int main(int argc, char *argv[])
 		CUndigraph::replaceN();
 	CUndigraph::findanveragesupport();
 	end = time(NULL);
-	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
 	cerr << "Correcting long reads..." << endl;
@@ -3269,14 +3274,14 @@ int main(int argc, char *argv[])
 //	corrector.findBestRouteBySupport();
 	corrector.findBestNRoute(bestn);
 	end = time(NULL);
-	cerr << "time cost: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
+	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
 	cerr << "finished!" << endl;
 	end = time(NULL);
-	cerr << "total time cost: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
+	cerr << "Total running time: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
 	start = end;
-	cerr << "max_support = " << max_support << endl;
+//	cerr << "max_support = " << max_support << endl;
 	system("date");
 	return 0;
 }
