@@ -27,18 +27,23 @@ repeat_free_mode = False
 if args.threads:
 	if args.threads > 128 or args.threads < 1:
 		print 'ERROR: argument -t/--threads  should be within 1 to 128'
+		exit(-1)
 if args.kmer:
 	if args.kmer > 127 or args.kmer < 4:
 		print 'ERROR: argument -k/--kmer  should be within 4 to 127'
+		exit(-1)
 if args.width:
 	if args.width > 20 or args.width < 2:
 		print 'ERROR: argument -w/--width  should be within 2 to 20'
+		exit(-1)
 if args.coverage:
 	if args.coverage > 65535 or args.coverage < 1:
 		print 'ERROR: argument -c/--coverage  should be within 1 to 65535'
+		exit(-1)
 if args.boundary:
 	if args.boundary > 20 or args.boundary < 0:
 		print 'ERROR: argument -b/--boundary  should be within 0 to 20'
+		exit(-1)
 
 
 if os.path.exists(temp_dir + '/step1'):
