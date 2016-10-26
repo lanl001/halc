@@ -128,7 +128,7 @@ if start_from_step <= 2:
 				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 15 --nCandidates 30 --bestn 20 --nproc ' + args.threads
 			else:
 				blasr_command = 'blasr ' + temp_dir + '/step1/' + longread_name + ' ' + contig_path + ' -m 5 --out ' + temp_dir + '/step2/' + outfile_name + ' --maxScore 2000 --minMatch 8 --minAlnLength 15 --nCandidates 30 --bestn 20 --nproc 4'
-		blasr_command += ' 1>' + temp_dir + '/step2/blasr.out ' + '2>' + temp_dir + '/step2/blasr.err'
+		blasr_command += ' 1>' + temp_dir + '/step2/blasr_' + str(i) + '.out ' + '2>' + temp_dir + '/step2/blasr_' + str(i) + '.err'
 
 		print 'Running command: ' + blasr_command
 		err = os.system(blasr_command)
@@ -166,7 +166,7 @@ if start_from_step <= 3:
 			HALC_command += ' -r'
 		HALC_command += ' -b ' + str(args.boundary)
 		HALC_command += ' -w ' + str(args.width)
-		HALC_command += ' 1>' + temp_dir + '/step3/HALC.out ' + '2>' + temp_dir + '/step3/HALC.err'
+		HALC_command += ' 1>' + temp_dir + '/step3/HALC_' + str(i) + '.out ' + '2>' + temp_dir + '/step3/HALC_' + str(i) + '.err'
 		print 'Running command: ' + HALC_command
 		err = os.system(HALC_command)
 		if err != 0:
