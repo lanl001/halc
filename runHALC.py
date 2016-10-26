@@ -56,7 +56,7 @@ long_read_path = args.long_read_path
 contig_path = args.contig_path
 
 if args.ordinary and args.repeatfree:
-	print "Error: '-o' and '-r' can not be setted at the same time"
+	print "Error: '-o' and '-r' can not be set at the same time"
 if not (args.ordinary or args.repeatfree):
 	print "Eorror: Either '-o' or '-r' should be setted"
 if args.ordinary:
