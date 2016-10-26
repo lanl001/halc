@@ -12,7 +12,7 @@ parser.add_argument("-o", "--ordinary",help="Ordinary mode utilizing repeats to 
 parser.add_argument('-r', "--repeat-free",dest='repeatfree', help="Repeat-free mode without utilizing repeats to make correction. It is exclusive with the -ordinary option.(no)", action='store_true', default=False)
 parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary difference to split the subcontigs.(4)", default=4)
 parser.add_argument('-a', '--accurate',  help="Accurate construction of the contig graph.(DEPRECATED)(yes)", action='store_true', default=True)
-parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int)
+parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated(auto).", type=int)
 parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4)
 parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(25)", default=25, type=int)
 parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)", type=int)
@@ -64,9 +64,10 @@ if args.kmer > 127 or args.kmer < 4:
 if args.width > 20 or args.width < 2:
 	print 'ERROR: argument -w/--width  should be within 2 to 20'
 	exit(-1)
-if args.coverage > 65535 or args.coverage < 1:
-	print 'ERROR: argument -c/--coverage  should be within 1 to 65535'
-	exit(-1)
+if args.coverage:
+	if args.coverage > 65535 or args.coverage < 1:
+		print 'ERROR: argument -c/--coverage  should be within 1 to 65535'
+		exit(-1)
 if args.boundary > 20 or args.boundary < 0:
 	print 'ERROR: argument -b/--boundary  should be within 0 to 20'
 	exit(-1)
