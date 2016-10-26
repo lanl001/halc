@@ -10,12 +10,12 @@ parser.add_argument('long_read_path', metavar='long_read.fa', help="The path to 
 parser.add_argument('contig_path', metavar='contig.fa', help="The path to contig.fa")
 parser.add_argument("-o", "--ordinary",help="Ordinary mode utilizing repeats to make correction. The error correction software LoRDEC and the initial short reads are required to refine the repeat corrected regions. It is exclusive with the -repeat-free option.(yes)")
 parser.add_argument('-r', "--repeat-free",dest='repeatfree', help="Repeat-free mode without utilizing repeats to make correction. It is exclusive with the -ordinary option.(no)", action='store_true', default=False)
-parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary difference to split the subcontigs.(4)", default=4, choices=xrange(0, 20))
+parser.add_argument('-b', '--boundary', type=int, help="Maximum boundary difference to split the subcontigs.(4)", default=4)
 parser.add_argument('-a', '--accurate',  help="Accurate construction of the contig graph.(DEPRECATED)(yes)", action='store_true', default=True)
-parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int, choices=xrange(1, 65535))
-parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4, choices=xrange(2, 20))
-parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(25)", default=25, type=int, choices=xrange(4, 127))
-parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)", type=int, choices=xrange(1, 128))
+parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int)
+parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4)
+parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(25)", default=25, type=int)
+parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)", type=int)
 parser.add_argument('-l', '--log', help="System log to print.(no)", action='store_true', default=False)
 args = parser.parse_args()
 
@@ -24,6 +24,22 @@ temp_dir = './temp'
 output_dir = './output'
 prefix = 'HALC'
 repeat_free_mode = False
+if args.threads:
+	if args.threads > 128 or args.threads < 1:
+		print 'ERROR: argument -t/--threads  should be within 1 to 128'
+if args.kmer:
+	if args.kmer > 127 or args.kmer < 4:
+		print 'ERROR: argument -k/--kmer  should be within 4 to 127'
+if args.width:
+	if args.width > 10 or args.kmer < 2:
+		print 'ERROR: argument -w/--width  should be within 2 to 20'
+if args.coverage:
+	if args.coverage > 10 or args.coverage < 2:
+		print 'ERROR: argument -c/--coverage  should be within 1 to 65535'
+if args.boundary:
+	if args.boundary > 20 or args.boundary < 0:
+		print 'ERROR: argument -b/--boundary  should be within 0 to 20'
+
 
 if os.path.exists(temp_dir + '/step1'):
 	if os.path.exists(temp_dir + '/step2'):
