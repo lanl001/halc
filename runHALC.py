@@ -15,7 +15,7 @@ parser.add_argument('-a', '--accurate',  help="Accurate construction of the cont
 parser.add_argument('-c', '--coverage',  help="Expected long read coverage. If not specified, it can be automatically calculated.", type=int, choices=xrange(1, 65535))
 parser.add_argument('-w', '--width', help="Maximum width of the dynamic programming table.(4)", type=int, default=4, choices=xrange(2, 20))
 parser.add_argument('-k', '--kmer', help="Kmer length for LoRDEC refinement.(25)", default=25, type=int, choices=xrange(4, 127))
-parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)", type=int, chioces=xrange(1, 128))
+parser.add_argument('-t', '--threads', help="Number of threads for one process to create. It is automatically set to the number of computing cores.(auto)", type=int, choices=xrange(1, 128))
 parser.add_argument('-l', '--log', help="System log to print.(no)", action='store_true', default=False)
 args = parser.parse_args()
 
