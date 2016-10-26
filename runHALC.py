@@ -31,10 +31,10 @@ if args.kmer:
 	if args.kmer > 127 or args.kmer < 4:
 		print 'ERROR: argument -k/--kmer  should be within 4 to 127'
 if args.width:
-	if args.width > 10 or args.kmer < 2:
+	if args.width > 20 or args.width < 2:
 		print 'ERROR: argument -w/--width  should be within 2 to 20'
 if args.coverage:
-	if args.coverage > 10 or args.coverage < 2:
+	if args.coverage > 65535 or args.coverage < 1:
 		print 'ERROR: argument -c/--coverage  should be within 1 to 65535'
 if args.boundary:
 	if args.boundary > 20 or args.boundary < 0:
