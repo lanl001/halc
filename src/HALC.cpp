@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <cmath>
 
-#define DISPLAY_NUM 10000
+#define DISPLAY_NUM 65535
 #define BASE_PER_LINE 70
 #define N_REPLACING_MODE 0
 
@@ -2817,7 +2817,6 @@ void parameterAnalyzer(int argc, char* argv[])
 				if (it->second.size() > 1)
 				{
 					cerr << "Invalid parameters!" << iRet << errPos << endl;
-					system("cat readme.txt");
 					exit(-1);
 				}
 				else
@@ -2832,7 +2831,6 @@ void parameterAnalyzer(int argc, char* argv[])
 						{
 							preprocess = true;
 							preprocess_threshold = preprocess_int;
-							cerr << "boundary = " << preprocess_threshold << endl;
 						}
 					}
 				}
@@ -2855,7 +2853,6 @@ void parameterAnalyzer(int argc, char* argv[])
 						ss >> max_support;
 						if (max_support == 65535)
 							cerr << "warning: coverage cannot more than 65535!" << endl;
-						cerr << "coverage = " << max_support << endl;
 						fixed_max_support = true;
 					}
 				}
@@ -2877,7 +2874,6 @@ void parameterAnalyzer(int argc, char* argv[])
 						std::stringstream ss;
 						ss << it->second[0];
 						ss >> bestn;
-						cerr << "width = " << bestn << endl;
 					}
 				}
 			}
@@ -2922,7 +2918,6 @@ void parameterAnalyzer(int argc, char* argv[])
 					ss << it->second[0];
 					ss >> numofthread;
 					omp_set_num_threads(numofthread);
-					cerr << "threads = " << numofthread << endl;
 				}
 			}
 
@@ -3010,7 +3005,6 @@ void parameterAnalyzer(int argc, char* argv[])
 				else
 				{
 					outputpath = it->second[0];
-					cerr << "out = " << outputpath << endl;
 				}
 			}
 
@@ -3025,7 +3019,6 @@ void parameterAnalyzer(int argc, char* argv[])
 				else
 				{
 					prefix = it->second[0];
-					cerr << "prefix = " << prefix << endl;
 				}
 			}
 
@@ -3040,7 +3033,6 @@ void parameterAnalyzer(int argc, char* argv[])
 				else
 				{
 					repeatfree = true;
-					cerr << "repeatfree = true" << endl;
 				}
 			}
 		}
@@ -3063,11 +3055,10 @@ void CUndigraph::findanveragesupport()
 			}
 		}
 	}
-	cerr << counter << endl;
-	cerr << sum << endl;
+//	cerr << counter << endl;
+//	cerr << sum << endl;
 	anveragesupport = ceil(sum/counter);
-	cerr <<"anveragesupport= "<< anveragesupport << endl;
-
+//	cerr <<"anveragesupport= "<< anveragesupport << endl;
 }
 
 void CUndigraph::replaceN()
@@ -3164,7 +3155,6 @@ void CUndigraph::replaceN()
 
 int main(int argc, char *argv[])
 {
-	system("date");
 	std::ios::sync_with_stdio(false);
 	logfilename = "log.txt";
 	subcontigfilename = "subcontigs.fa";
@@ -3200,8 +3190,21 @@ int main(int argc, char *argv[])
 	}
 
 	parameterAnalyzer(argc, argv);
+	cerr << "boundary = " << preprocess_threshold << endl;
+	if(max_support == 0)
+		cerr << "coverage = auto" << endl;
+	else
+		cerr << "coverage" << max_support << endl;
+	cerr << "width = " << bestn << endl;
+	if(numofthread == 0)
+		cerr << "threads = auto"<< endl;
+	else
+		cerr << "threads = " << numofthread << endl;
+	cerr << "out = " << outputpath << endl;
+	cerr << "prefix = " << prefix << endl;
+	cerr << "repeatfree = true" << endl;
+//	cerr << "N_REPLACING_MODE = " << N_REPLACING_MODE << endl;
 
-	cerr << "N_REPLACING_MODE = " << N_REPLACING_MODE << endl;
 	clock_t start0 = time(NULL);
 	clock_t start = start0;
 	cerr << endl << "Making hashmap for long reads..." << endl;
@@ -3282,6 +3285,5 @@ int main(int argc, char *argv[])
 	cerr << "Total running time: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 //	cerr << "max_support = " << max_support << endl;
-	system("date");
 	return 0;
 }

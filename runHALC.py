@@ -30,23 +30,23 @@ if os.path.exists(temp_dir + '/step1'):
 		if os.path.exists(temp_dir + '/step3'):
 			if os.path.exists(temp_dir + '/step4'):
 				if os.path.exists(temp_dir + '/step5'):
-					print 'WARNING:' + temp_dir + '/step5' + ' was found. Automatically started from step5'
+					print 'WARNING: ' + temp_dir + '/step5' + ' was found. Automatically started from step5'
 					shutil.rmtree(temp_dir + '/step5')
 					start_from_step = 5
 				else:
-					print 'WARNING:' + temp_dir + '/step4' + ' was found. Automatically started from step4'
+					print 'WARNING: ' + temp_dir + '/step4' + ' was found. Automatically started from step4'
 					shutil.rmtree(temp_dir + '/step4')
 					start_from_step = 4
 			else:
-				print 'WARNING:' + temp_dir + '/step3' + ' was found. Automatically started from step3'
+				print 'WARNING: ' + temp_dir + '/step3' + ' was found. Automatically started from step3'
 				shutil.rmtree(temp_dir + '/step3')
 				start_from_step = 3
 		else:
-			print 'WARNING:' + temp_dir + '/step2' + ' was found. Automatically started from step2'
+			print 'WARNING: ' + temp_dir + '/step2' + ' was found. Automatically started from step2'
 			shutil.rmtree(temp_dir + '/step2')
 			start_from_step = 2
 	else:
-		print 'WARNING:' + temp_dir + '/step1' + ' was found. Automatically started from step1'
+		print 'WARNING: ' + temp_dir + '/step1' + ' was found. Automatically started from step1'
 		shutil.rmtree(temp_dir + '/step1')
 		start_from_step = 1
 else:
@@ -97,7 +97,7 @@ if start_from_step <= 1:
 		os.makedirs(temp_dir)
 
 	if os.path.exists(temp_dir + '/step1'):
-		print 'ERROR:' + temp_dir + '/step1' + ' already exist, please delete it before running step 1'
+		print 'ERROR: ' + temp_dir + '/step1' + ' already exist, please delete it before running step 1'
 		exit(-1)
 	else:
 		os.mkdir(temp_dir + '/step1')
@@ -108,7 +108,7 @@ if start_from_step <= 1:
 	err = os.system(Chunker_command)
 
 	if err != 0:
-		print 'ERROR:' + 'Failed torun SeqChunker:' + os.strerror(err)
+		print 'ERROR: ' + 'Failed torun SeqChunker:' + os.strerror(err)
 		exit(-1)
 
 	line_count = len(os.popen('ls -l ' + temp_dir + '/step1/ |grep pb-....fa').readlines())
@@ -127,7 +127,7 @@ if start_from_step <= 2:
 		os.makedirs(temp_dir)
 
 	if os.path.exists(temp_dir + '/step2'):
-		print 'ERROR:' + temp_dir + '/step2' + ' already exist, please delete it before running step 2'
+		print 'ERROR: ' + temp_dir + '/step2' + ' already exist, please delete it before running step 2'
 		exit(-1)
 	else:
 		os.mkdir(temp_dir + '/step2')
@@ -151,7 +151,7 @@ if start_from_step <= 2:
 		print 'Running command: ' + blasr_command
 		err = os.system(blasr_command)
 		if err != 0:
-			print 'ERROR:' + 'Failed to run blasr:' + os.strerror(err)
+			print 'ERROR: ' + 'Failed to run blasr:' + os.strerror(err)
 			exit(-1)
 	print '''
 /////STEP 2 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
@@ -166,7 +166,7 @@ if start_from_step <= 3:
 		os.makedirs(temp_dir)
 
 	if os.path.exists(temp_dir + '/step3'):
-		print 'ERROR:' + temp_dir + '/step3' + ' already exist, please delete it before running step 3'
+		print 'ERROR: ' + temp_dir + '/step3' + ' already exist, please delete it before running step 3'
 		exit(-1)
 	else:
 		os.mkdir(temp_dir + '/step3')
@@ -188,27 +188,27 @@ if start_from_step <= 3:
 		print 'Running command: ' + HALC_command
 		err = os.system(HALC_command)
 		if err != 0:
-			print 'ERROR:' + 'Failed to run HALC:' + os.strerror(err)
+			print 'ERROR: ' + 'Failed to run HALC:' + os.strerror(err)
 			exit(-1)
 
 	cat_command = 'cat ' + temp_dir + '/step3/' + '*.corrected.fa >' + temp_dir + '/step3/' + prefix + '.corrected.fa'
 	err = os.system(cat_command)
 	if err != 0:
-		print 'ERROR:' + 'Failed tocombine corrected sequences:' + os.strerror(err)
+		print 'ERROR: ' + 'Failed tocombine corrected sequences:' + os.strerror(err)
 		exit(-1)
 
 	if not repeat_free_mode:
 		cat_command = 'cat ' + temp_dir + '/step3/' + '*.repeatused.fa >' + temp_dir + '/step3/' + prefix + '.repeatused.fa'
 		err = os.system(cat_command)
 		if err != 0:
-			print 'ERROR:' + 'Failed tocombine corrected sequences:' + os.strerror(err)
+			print 'ERROR: ' + 'Failed tocombine corrected sequences:' + os.strerror(err)
 			exit(-1)
 
 	if repeat_free_mode:
 		cp_command = 'cp ' + temp_dir + '/step3/' + prefix + '.corrected.fa ' + output_dir
 		err = os.system(cp_command)
 		if err != 0:
-			print 'ERROR:' + 'Failed tocopy corrected sequences to output directory' + os.strerror(err)
+			print 'ERROR: ' + 'Failed tocopy corrected sequences to output directory' + os.strerror(err)
 			exit(-1)
 	print '''
 /////STEP 3 DONE/////////////////////////////////////////////////////////////////////////////////////////////////////'''
@@ -224,7 +224,7 @@ if start_from_step <= 4 and not repeat_free_mode:
 		os.makedirs(temp_dir)
 
 	if os.path.exists(temp_dir + '/step4'):
-		print 'ERROR:' + temp_dir + '/step4' + ' already exist, please delete it before running step 4'
+		print 'ERROR: ' + temp_dir + '/step4' + ' already exist, please delete it before running step 4'
 		exit(-1)
 	else:
 		os.mkdir(temp_dir + '/step4')
@@ -237,13 +237,13 @@ if start_from_step <= 4 and not repeat_free_mode:
 
 	err = os.system(LoRDEC_command)
 	if err != 0:
-		print 'ERROR:' + 'Failed to run LoRDEC:' + os.strerror(err)
+		print 'ERROR: ' + 'Failed to run LoRDEC:' + os.strerror(err)
 		exit(-1)
 
 	cat_command = 'cat ' + temp_dir + '/step4/' + prefix + '.corrected.fa ' + temp_dir + '/step3/' + prefix + '.corrected.fa >' + output_dir + '/' + prefix + '.corrected.fa'
 	err = os.system(cat_command)
 	if err != 0:
-		print 'ERROR:' + 'Failed tocombine corrected sequences:' + os.strerror(err)
+		print 'ERROR: ' + 'Failed tocombine corrected sequences:' + os.strerror(err)
 		exit(-1)
 
 	print '''
@@ -260,7 +260,7 @@ if start_from_step <= 5:
 		os.makedirs(temp_dir)
 
 	if os.path.exists(temp_dir + '/step5'):
-		print 'ERROR:' + temp_dir + '/step5' + ' already exist, please delete it before running step 5'
+		print 'ERROR: ' + temp_dir + '/step5' + ' already exist, please delete it before running step 5'
 		exit(-1)
 	else:
 		os.mkdir(temp_dir + '/step5')
@@ -270,7 +270,7 @@ if start_from_step <= 5:
 	print 'Running command: ' + trim_command
 	err = os.system(trim_command)
 	if err != 0:
-		print 'ERROR:' + 'Failed to trim corrected sequences:' + os.strerror(err)
+		print 'ERROR: ' + 'Failed to trim corrected sequences:' + os.strerror(err)
 		exit(-1)
 
 	split_command = 'Splitter -i ' + output_dir + '/' + prefix + '.corrected.fa' + ' -o ' + output_dir + '/' + prefix + '.split.fa'
@@ -278,7 +278,7 @@ if start_from_step <= 5:
 	print 'Running command: ' + split_command
 	err = os.system(split_command)
 	if err != 0:
-		print 'ERROR:' + 'Failed to split corrected sequences:' + os.strerror(err)
+		print 'ERROR: ' + 'Failed to split corrected sequences:' + os.strerror(err)
 		exit(-1)
 	print '''
 /////Finished!!! Results are stored in output folder/////////////////////////////////////////////////////////////////'''
