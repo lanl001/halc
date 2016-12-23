@@ -3168,7 +3168,7 @@ int main(int argc, char *argv[])
 	removeN = true;
 	repeatfree = false;
 	outputpath = "./";
-	prefix = "HiBAM";
+	prefix = "HALC";
 
 	if (argc < 3)
 	{
