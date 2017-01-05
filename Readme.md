@@ -49,7 +49,7 @@ HALC is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic
    -a/-accurate (yes)<br>
    Accurate construction of the contig graph.<br>
    -c/-coverage n (auto)<br>
-   Expected long read coverage. If not specified, it can be automatically calculated.<br>
+   Expected coverage on contigs. If not specified, it can be automatically calculated.<br>
    -w/-width n (4)<br>
    Maximum width of the dynamic programming table.<br>
    -k/-kmer n (25)<br>
