@@ -10,7 +10,7 @@ The HALC manuscript has been submitted to BMC Bioinformatics!
 
 <a name="overview"/>
 ### Overview
-HALC is a software that makes error correction for long reads with high base maintenance ratio.
+HALC is software that makes error correction for long reads with high base maintenance ratio.
 
 <a name="copyright"/>
 ###Copy right
