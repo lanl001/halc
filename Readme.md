@@ -6,11 +6,11 @@
 
 <a name="news"/>
 ### LATEST NEWS
-The HALC manuscript has been submitted to BMC Bioinformatics!
+We have finished all the suggested revisions of the HALC manuscript submitted to BMC Bioinformatics!
 
 <a name="overview"/>
 ### Overview
-HALC is software that makes error correction for long reads with high base maintenance ratio.
+HALC is software that makes error correction for long reads with high throughput.
 
 <a name="copyright"/>
 ###Copy right
