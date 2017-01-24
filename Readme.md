@@ -1,12 +1,15 @@
 ##### Contents
 [LATEST NEWS] (#news)
+
 [Overview] (#overview)
+
 [Copy right] (#copyright)
+
 [Short Manual] (#manual)
 
 <a name="news"/>
 ### LATEST NEWS
-We have finished all the suggested revisions of the HALC manuscript submitted to BMC Bioinformatics!
+The HALC manuscript has been resubmitted to BMC Bioinformatics after major revision!
 
 <a name="overview"/>
 ### Overview
