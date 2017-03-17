@@ -1,5 +1,5 @@
 ##### Contents
-[LATEST NEWS] (#news)   
+[LATEST NEWS] (#news)  
 [Overview] (#overview)  
 [Copy right] (#copyright)  
 [Short Manual] (#manual)  
