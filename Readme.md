@@ -13,7 +13,7 @@ The HALC manuscript has been resubmitted to BMC Bioinformatics after major revis
 HALC is software that makes error correction for long reads with high throughput.
 
 <a name="copyright"/>
-###Copy right
+### Copy right
 HALC is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic-2.0).
 
 <a name="manual"/>
