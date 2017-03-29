@@ -1,5 +1,5 @@
 ### LATEST NEWS
-The HALC manuscript has been resubmitted to BMC Bioinformatics after major revision!
+The HALC paper is accepted for publication in BMC Bioinformatics!
 
 ### Overview
 HALC is software that makes error correction for long reads with high throughput.
@@ -53,4 +53,8 @@ HALC is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic
    * Error corrected full long reads.
    * Error corrected trimmed long reads.
    * Error corrected split long reads.
+
+### Chinese name
+   HALC's Chinese name is 浩克.
+
 
