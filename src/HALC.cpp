@@ -17,7 +17,6 @@
 #include <unistd.h>
 #include "parsingargs.h"
 #include "BlasrAdapter.h"
-#include <omp.h>
 #include <limits>
 #include <time.h>
 #include <sys/stat.h>
@@ -556,56 +555,9 @@ string GetACut2(char *argv, fstream::pos_type position, int begin, int end, Cfil
 
 string Cfilebuffer::Getstring(char *argv, fstream::pos_type begin, fstream::pos_type end)
 {
-	string temp;
-	if (strcmp(this->myfilename.c_str(), argv) == 0 && begin >= this->startoffset && begin <= this->startoffset + this->mysize - 1)
-	{
-		this->hited++;
-		if (end <= this->startoffset + this->mysize - 1)
-		{
-			temp.insert(0, buffer + begin - this->startoffset, (buffer + end - this->startoffset) - (buffer + begin - this->startoffset) + 1);
-		}
-		else if (end > this->startoffset + this->mysize - 1)
-		{
-			temp.insert(0, buffer + begin - this->startoffset, buffer + this->mysize - (buffer + begin - this->startoffset));
-			temp += this->Getstring(argv, this->startoffset + this->mysize, end);
-		}
-	}
-	else if (strcmp(this->myfilename.c_str(), argv) == 0 && (begin < this->startoffset || begin > this->startoffset + this->mysize - 1))
-	{
-		this->nothited++;
-		ifstream file(argv);
-		file.seekg(begin, ios::beg);
-		//file.seekg((begin-expectsize/5) > (fstream::pos_type)0 ? (begin - expectsize/5) : (fstream::pos_type)0, ios::beg);
-		file.read(this->buffer, this->expectsize);
-		this->mysize = file.gcount();
-		if (this->mysize == 0)
-		{
-#pragma omp critical
-			{
-				cerr << omp_get_thread_num() << "ERROR: Cfilebuffer: Can not read file at pos: " << begin << endl;
-				file.clear();
-				file.seekg(0, ios::end);
-				streampos p = file.tellg();
-				file.close();
-				cerr << "file size =" << p << endl;
-				exit(-1);
-			}
-			string nullstring;
-			return nullstring;
-		}
-		this->buffer[mysize] = '\0';
-		file.close();
-		//this->startoffset = (begin-expectsize/5) > (fstream::pos_type)0 ? (begin - expectsize/5) : (fstream::pos_type)0;
-		this->startoffset = begin;
-		temp = this->Getstring(argv, begin, end);
-	}
-	else if (strcmp(this->myfilename.c_str(), argv) != 0)
-	{
-		string filename(argv);
-		this->refreshbuffer(filename, this->mysize);
-		temp = this->Getstring(argv, begin, end);
-	}
-	return temp;
+	string filename(argv);
+	refreshbuffer(filename);
+	return filebuffers[filename].substr(begin, end - begin +1);
 }
 
 string lower(string raw)
@@ -2527,6 +2479,8 @@ bool Ccorrector::findBestNRoute(int n)
 			exit(-1);
 		}
 	}
+	Cfilebuffer longreadbuffer(lrfilename);
+	Cfilebuffer contigbuffer(ctfilename);
 #pragma omp parallel
 	{
 		std::vector<CMyVectorInt> pdist;
@@ -2541,8 +2495,6 @@ bool Ccorrector::findBestNRoute(int n)
 		 string s2 = "trimedlongreadedcorrected_" + pnum + ".fa";
 		 ofstream correctedfile(s.c_str(), ios::trunc);
 		 ofstream trimedcorrectedfile; //(s2.c_str(), ios::trunc);*/
-		Cfilebuffer longreadbuffer(lrfilename, buffersize);
-		Cfilebuffer contigbuffer(ctfilename, buffersize);
 		bool hasrepeat = false;
 #pragma omp for private(path,pdist,ppath)
 		for (i = 0; i < undigraph.subundigraphs.size(); i++)
@@ -3147,6 +3099,7 @@ void CUndigraph::replaceN()
 int main(int argc, char *argv[])
 {
 	std::ios::sync_with_stdio(false);
+	omp_init_lock(&mylock);
 	logfilename = "log.txt";
 	subcontigfilename = "subcontigs.fa";
 	buffersize = 4000000000;

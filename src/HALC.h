@@ -15,6 +15,11 @@
 #include<utility>
 #include<vector>
 #include<unordered_map>
+#include<sstream>
+#include<omp.h>
+
+static omp_lock_t mylock;
+
 class Ccutpoint
 {
 public:
@@ -113,62 +118,49 @@ struct map_equal
 class Cfilebuffer
 {
 private:
-	char* buffer;
-	std::string myfilename;
-	long mysize;
-	long expectsize;
-	long startoffset;
-	long hited;
-	long nothited;
+	std::unordered_map<std::string, std::string> filebuffers;
 public:
-	Cfilebuffer() :
-			hited(0), nothited(0)
+	Cfilebuffer()
 	{
 	}
 	;
-	Cfilebuffer(std::string filename, long size) :
-			hited(0), nothited(0)
+	Cfilebuffer(std::string filename, long size = 0)
 	{
-		std::ifstream file(filename.c_str());
-		if (file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in) < size)
-			size = file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in);
-		file.rdbuf()->pubseekpos(0, std::ios::in);
-		buffer = new char[size + 1];
-		buffer[size] = '\0';
-		myfilename = filename;
-		expectsize = size;
-		startoffset = 0;
-		file.read(buffer, expectsize);
-		mysize = file.gcount();
-		buffer[mysize] = '\0';
-		file.close();
+		std::ifstream fin(filename.c_str());
+		std::string fileContent;
+		std::stringstream ss;
+#pragma omp critical
+{
+		if (fin.is_open())
+		{
+			ss << fin.rdbuf();
+			filebuffers[filename] = std::move(ss.str());
+			fin.close();
+		}
+}
 	}
-	void refreshbuffer(std::string filename, long size)
+	void refreshbuffer(std::string filename, long size = 0)
 	{
-		delete[] buffer;
-		std::ifstream file(filename.c_str());
-		if (file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in) < size)
-			size = file.rdbuf()->pubseekoff(0, std::ios::end, std::ios::in);
-		file.rdbuf()->pubseekpos(0, std::ios::in);
-		buffer = new char[size + 1];
-		buffer[size] = '\0';
-		myfilename = filename;
-		expectsize = size;
-		startoffset = 0;
-		file.read(buffer, expectsize);
-		mysize = file.gcount();
-		buffer[mysize] = '\0';
-		file.close();
+
+		if (filebuffers.find(filename) == filebuffers.end())
+		{
+			omp_set_lock(&mylock);
+			if(filebuffers.find(filename) != filebuffers.end()){
+				return;
+			}
+			std::ifstream infile(filename.c_str());
+			std::string fileContent;
+			std::stringstream ss;
+			if (infile.is_open())
+			{
+				ss << infile.rdbuf();
+				filebuffers[filename] = std::move(ss.str());
+				infile.close();
+			}
+			omp_unset_lock(&mylock);
+		}
 	}
 	std::string Getstring(char *argv, std::fstream::pos_type begin, std::fstream::pos_type end);
-	~Cfilebuffer()
-	{
-		delete[] buffer;
-	}
-	float hitraio()
-	{
-		return (float) hited / (hited + nothited);
-	}
 };
 
 class CSubUndigraph
