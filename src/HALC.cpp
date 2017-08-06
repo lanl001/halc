@@ -55,15 +55,6 @@ bool repeatfree;
 
 namespace __gnu_cxx
 {
-size_t str_hash::operator()(const string& str) const
-{
-	return __stl_hash_string(str.c_str());
-}
-bool str_equal::operator()(const string& s1, const string& s2) const
-{
-	return s1 == s2;
-}
-
 size_t map_hash::operator()(const pair<int, int>& m) const
 {
 	return m.first * subcontigs.size() + m.second;
@@ -77,9 +68,9 @@ bool map_equal::operator()(const pair<int, int>& m1, const pair<int, int>& m2) c
 }
 }
 
-hash_map<string, Ccontig, str_hash, str_equal> cthm;
-hash_map<string, Clongread, str_hash, str_equal> lrhm;
-hash_map<string, unsigned long, str_hash, str_equal> scthm;
+unordered_map<string, Ccontig> cthm;
+unordered_map<string, Clongread> lrhm;
+unordered_map<string, unsigned long> scthm;
 
 bool CSubcontig::operator==(const CSubcontig& obj) const
 {
@@ -1341,7 +1332,7 @@ bool CSubUndigraph::getEdges()
 }
 
 //CUndigraph undigraph;
-hash_map<pair<unsigned long, unsigned long>, unsigned short, map_hash, map_equal> CUndigraph::graph[3];
+unordered_map<pair<unsigned long, unsigned long>, unsigned short, map_hash, map_equal> CUndigraph::graph[3];
 vector<CSubUndigraph> CUndigraph::subundigraphs;
 vector<vector<CSubcontig> > CSubUndigraph::contiglist;
 vector<Nnodeforsort> CUndigraph::Nnodes;
@@ -2566,7 +2557,7 @@ bool Ccorrector::findBestNRoute(int n)
 //		cerr << "longreadhitratio = "<< longreadbuffer.hitraio()<<endl;
 //		cerr << "contighitratio = "<< contigbuffer.hitraio()<<endl;
 	}
-	hash_map<string, Clongread, str_hash, str_equal>::iterator hmit;
+	unordered_map<string, Clongread>::iterator hmit;
 	for (hmit = lrhm.begin(); hmit != lrhm.end(); hmit++)
 	{
 		if (!(*hmit).second.corrected)
@@ -3043,7 +3034,7 @@ void CUndigraph::findanveragesupport()
 {
 	double sum = 0;
 	long counter = 0;
-	hash_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal>::iterator it;
+	unordered_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal>::iterator it;
 	for(int i = 0 ; i < 3 ; i++)
 	{
 		for(it = graph[i].begin() ; it != graph[i].end() ; it++)

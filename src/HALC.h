@@ -8,11 +8,13 @@
 #ifndef SEQUENCINGPROJECT_H_
 #define SEQUENCINGPROJECT_H_
 #include<string.h>
-#include <ext/hash_map>
 #include<map>
 #include<fstream>
 #include<list>
 #include<iostream>
+#include<utility>
+#include<vector>
+#include<unordered_map>
 class Ccutpoint
 {
 public:
@@ -98,21 +100,13 @@ inline bool ComName(Ccutpoint first, Ccutpoint second)
 
 namespace __gnu_cxx
 {
-struct str_hash
-{
-	size_t operator()(const std::string& str) const;
-};
-struct str_equal
-{
-	bool operator()(const std::string& s1, const std::string& s2) const;
-};
 struct map_hash
 {
-	size_t operator()(const pair<int, int>& m) const;
+	size_t operator()(const std::pair<int, int>& m) const;
 };
 struct map_equal
 {
-	bool operator()(const pair<int, int>& m1, const pair<int, int>& m2) const;
+	bool operator()(const std::pair<int, int>& m1, const std::pair<int, int>& m2) const;
 };
 }
 
@@ -190,7 +184,7 @@ public:
 	std::string longreadname;
 	std::vector<CSubcontigEx> Subconitglist; //all subcontigs of a longread
 	friend class CUndigraph;
-	__gnu_cxx ::hash_map<std::pair<unsigned long, unsigned long>, bool, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal> edges[3];
+	std::unordered_map<std::pair<unsigned long, unsigned long>, bool, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal> edges[3];
 private:
 	int ctoffset;
 	int lroffset;
@@ -224,7 +218,7 @@ public:
 class CUndigraph
 {
 public:
-	static __gnu_cxx ::hash_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal> graph[3];
+	static std::unordered_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal> graph[3];
 	static void
 	MakeUndigraph(std::ifstream& alignfile);
 	static std::vector<CSubUndigraph> subundigraphs;

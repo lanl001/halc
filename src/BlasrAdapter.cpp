@@ -10,9 +10,9 @@
 using namespace __gnu_cxx;
 using namespace std;
 
-extern hash_map<string, Ccontig, str_hash, str_equal> cthm;
-extern hash_map<string, Clongread, str_hash, str_equal> lrhm;
-extern hash_map<string, unsigned long, str_hash, str_equal> scthm;
+extern unordered_map<string, Ccontig> cthm;
+extern unordered_map<string, Clongread> lrhm;
+extern unordered_map<string, unsigned long> scthm;
 extern vector<Ccutpoint> cutpoints;
 extern void Sort();
 extern string GetACut(char *argv, fstream::pos_type position, int begin, int end);
