@@ -54,11 +54,11 @@ bool repeatfree;
 
 namespace __gnu_cxx
 {
-size_t map_hash::operator()(const pair<int, int>& m) const
+size_t map_hash::operator()(const pair<long, long>& m) const
 {
 	return hash<int>()(m.first<<16^m.second);
 }
-bool map_equal::operator()(const pair<int, int>& m1, const pair<int, int>& m2) const
+bool map_equal::operator()(const pair<long, long>& m1, const pair<long, long>& m2) const
 {
 	if (m1.first == m2.first && m1.second == m2.second)
 		return true;
@@ -1304,179 +1304,179 @@ bool CSubUndigraph::drawLine(CSubcontigEx contig1, CSubcontigEx contig2)
 	{ //A->B||B->A
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
 		{
-			CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[0][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 //			cerr<<CUndigraph::graph[0][pair<unsigned int, unsigned int>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)]<<endl;
 		}
 		else
 		{
-			if (++CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[0][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cerr << "warning:reached max_support" << endl;
-					--CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[0][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[0][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cerr << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[0][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
 		if (printlog)
-			logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
-		edges[0][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
+			logfile << CUndigraph::graph[0][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
+		edges[0][make_pair(contig1.index, contig2.index)] = true;
 	}
 	else if (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '-')
 	{ //-A->-B||-B->-A
 		if ((contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex) || (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex))
-			CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[0][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[0][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cerr << "warning:reached max_support" << endl;
-					--CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[0][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[0][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cerr << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[0][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
 		if (printlog)
-			logfile << CUndigraph::graph[0][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+			logfile << CUndigraph::graph[0][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
 
-		edges[0][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
+		edges[0][make_pair(contig2.index, contig1.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs <= contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '-'))
 	{ //A->-B
 		if (contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex)
-			CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[1][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[1][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cerr << "warning:reached max_support" << endl;
-					--CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[1][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[1][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cerr << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[1][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
 		if (printlog)
-			logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
-		edges[1][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
+			logfile << CUndigraph::graph[1][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
+		edges[1][make_pair(contig1.index, contig2.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '+' && contig2.subcontig.strand == '-'))
 	{ //B->-A
 		if (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex)
-			CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[1][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[1][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cerr << "warning:reached max_support" << endl;
-					--CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[1][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[1][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cerr << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[1][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
 		if (printlog)
-			logfile << CUndigraph::graph[1][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
-		edges[1][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
+			logfile << CUndigraph::graph[1][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+		edges[1][make_pair(contig2.index, contig1.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs <= contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
 	{ //-A->B
 		if (contig1.subcontig.tailindex + 1 == contig2.subcontig.headindex)
-			CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[2][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[2][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cerr << "warning:reached max_support" << endl;
-					--CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[2][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[2][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cerr << contig1.subcontig.indexofsubcontigs << "->" << contig2.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[2][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
 		if (printlog)
-			logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
-		edges[2][pair<unsigned long, unsigned long>(contig1.index, contig2.index)] = true;
+			logfile << CUndigraph::graph[2][make_pair(contig1.subcontig.indexofsubcontigs, contig2.subcontig.indexofsubcontigs)] << endl;
+		edges[2][make_pair(contig1.index, contig2.index)] = true;
 	}
 	else if ((contig1.subcontig.indexofsubcontigs > contig2.subcontig.indexofsubcontigs) && (contig1.subcontig.strand == '-' && contig2.subcontig.strand == '+'))
 	{ //-B->A
 		if (contig2.subcontig.tailindex + 1 == contig1.subcontig.headindex)
-			CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
+			CUndigraph::graph[2][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] = 65535;
 		else
 		{
-			if (++CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
+			if (++CUndigraph::graph[2][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > max_support)
 			{
 				if (fixed_max_support)
 				{
 					cerr << "warning:reached max_support" << endl;
-					--CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
+					--CUndigraph::graph[2][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)];
 				}
 				else
 				{
 					max_support++;
 				}
 			}
-			if (CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
+			if (CUndigraph::graph[2][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] > DISPLAY_NUM
 					&& contig1.subcontig.indexofsubcontigs != -1 && contig2.subcontig.indexofsubcontigs != -1)
 			{
 				cerr << contig2.subcontig.indexofsubcontigs << "->" << contig1.subcontig.indexofsubcontigs << ' '
-						<< CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
+						<< CUndigraph::graph[2][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << " support found" << endl;
 			}
 		}
 		if (printlog)
-			logfile << CUndigraph::graph[2][pair<unsigned long, unsigned long>(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
-		edges[2][pair<unsigned long, unsigned long>(contig2.index, contig1.index)] = true;
+			logfile << CUndigraph::graph[2][make_pair(contig2.subcontig.indexofsubcontigs, contig1.subcontig.indexofsubcontigs)] << endl;
+		edges[2][make_pair(contig2.index, contig1.index)] = true;
 	}
 	else
 		return false;
@@ -1738,14 +1738,14 @@ bool Ccorrector::fpathbysupport(int index, int *&dist)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1754,21 +1754,21 @@ bool Ccorrector::fpathbysupport(int index, int *&dist)
 			{
 				if (ispositive)
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][make_pair(jindexofsubcontig, iindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][make_pair(jindexofsubcontig, iindexofsubcontig)];
 				}
 				else
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][make_pair(iindexofsubcontig, jindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][make_pair(iindexofsubcontig, jindexofsubcontig)];
 				}
 				if ((dist[j] + distji) < k)
 				{
@@ -1831,14 +1831,14 @@ bool Ccorrector::fpathbysimilarity(int index, int *&dist)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1912,14 +1912,14 @@ bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> 
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -1991,14 +1991,14 @@ int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -2007,21 +2007,21 @@ int Ccorrector::froutebysupport(int index, int *&dist, int *&path)
 			{
 				if (ispositive)
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][make_pair(jindexofsubcontig, iindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][make_pair(jindexofsubcontig, iindexofsubcontig)];
 				}
 				else
 				{
-					if (max_support < undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)])
+					if (max_support < undigraph.graph[temp][make_pair(iindexofsubcontig, jindexofsubcontig)])
 					{
 						distji = 0;
 					}
 					else
-						distji = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)];
+						distji = max_support - undigraph.graph[temp][make_pair(iindexofsubcontig, jindexofsubcontig)];
 				}
 				b = dist[i] - distji;
 				if (b == dist[j])
@@ -2087,14 +2087,14 @@ int Ccorrector::froutebysimilarity(int index, int *&dist, int *&path)
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -2174,14 +2174,14 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -2265,14 +2265,14 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 			}
 			if (ispositive)
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
 			}
 			else
 			{
-				if (undigraph.subundigraphs[index].edges[temp].find(pair<unsigned long, unsigned long>(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
+				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
 					c = false;
@@ -2357,20 +2357,20 @@ int Ccorrector::leastcostofn(int index, vector<CMyVectorInt> &ppath, bool &hasre
 					ispositive = false;
 				}
 				if (ispositive)
-					consume = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)];
+					consume = max_support - undigraph.graph[temp][make_pair(jindexofsubcontig, iindexofsubcontig)];
 				else
-					consume = max_support - undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)];
+					consume = max_support - undigraph.graph[temp][make_pair(iindexofsubcontig, jindexofsubcontig)];
 				if (consume < 0)
 				{
 					consume = 0;
 				}
-				else if (ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(jindexofsubcontig, iindexofsubcontig)] <= CUndigraph::anveragesupport)
+				else if (ispositive && undigraph.graph[temp][make_pair(jindexofsubcontig, iindexofsubcontig)] <= CUndigraph::anveragesupport)
 				{
 					counter++;
 					if (counter >= 3)
 						sum.back().second = true;
 				}
-				else if (!ispositive && undigraph.graph[temp][pair<unsigned long, unsigned long>(iindexofsubcontig, jindexofsubcontig)] <= CUndigraph::anveragesupport)
+				else if (!ispositive && undigraph.graph[temp][make_pair(iindexofsubcontig, jindexofsubcontig)] <= CUndigraph::anveragesupport)
 				{
 					counter++;
 					if (counter >= 3)
