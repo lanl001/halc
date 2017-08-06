@@ -56,7 +56,7 @@ namespace __gnu_cxx
 {
 size_t map_hash::operator()(const pair<int, int>& m) const
 {
-	return m.first * subcontigs.size() + m.second;
+	return hash<int>()(m.first<<16^m.second);
 }
 bool map_equal::operator()(const pair<int, int>& m1, const pair<int, int>& m2) const
 {
@@ -1684,10 +1684,6 @@ int CMyVectorInt::getnext()
 bool CMyVectorInt::hasnext()
 {
 	return biggestindex < this->size();
-}
-CMyVectorInt::CMyVectorInt() :
-		biggestindex(0)
-{
 }
 
 bool Ccorrector::fpathbysupport(int index, int *&dist)

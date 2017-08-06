@@ -224,11 +224,10 @@ public:
 class CMyVectorInt: public std::vector<int>
 {
 private:
-	unsigned int biggestindex;
+	unsigned int biggestindex = 0;
 public:
 	int getnext();
 	bool hasnext();
-	CMyVectorInt();
 };
 
 class Ccorrector
