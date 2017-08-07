@@ -1912,6 +1912,8 @@ bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> 
 			}
 			if (ispositive)
 			{
+#pragma omp critical
+				cerr<<omp_get_thread_num() << "nfpathsimilarity:1915 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -1919,6 +1921,8 @@ bool Ccorrector::nfpathbysimilarity(int index, int n, std::vector<CMyVectorInt> 
 			}
 			else
 			{
+#pragma omp critical
+				cerr<<omp_get_thread_num() << "nfpathsimilarity:1923 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2174,6 +2178,8 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			}
 			if (ispositive)
 			{
+#pragma omp critical
+				cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2179 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2181,6 +2187,8 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			}
 			else
 			{
+#pragma omp critical
+				cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2187 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2265,6 +2273,8 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 			}
 			if (ispositive)
 			{
+#pragma omp critical
+				cerr << omp_get_thread_num() <<"nfroutebysimilarity:2272 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2272,6 +2282,8 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 			}
 			else
 			{
+#pragma omp critical
+				cerr << omp_get_thread_num() << "nfroutebysimilarity:2280 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
