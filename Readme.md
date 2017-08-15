@@ -21,7 +21,7 @@ HALC is under the [Artistic License 2.0](http://opensource.org/licenses/Artistic
 3. Inputs
    * Long reads in FASTA format.
    * Contigs assembled from the corresponding short reads in FASTA format.
-   * The initial short reads in FASTA format (only for -ordinary mode).
+   * The initial short reads in FASTA format (only for -ordinary mode; obtained with cat left_reads.fa >short_reads.fa and then cat right_reads.fa >>short_reads.fa).
 
 4. Using AlignGraph
 
