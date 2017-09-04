@@ -3154,7 +3154,7 @@ int main(int argc, char *argv[])
 		cerr << "threads = " << numofthread << endl;
 	cerr << "out = " << outputpath << endl;
 	cerr << "prefix = " << prefix << endl;
-	cerr << "repeatfree = "<< repeatfree ? "true" : "false" << endl;
+	cerr << "repeatfree = "<< (repeatfree ? "true" : "false") << endl;
 //	cerr << "N_REPLACING_MODE = " << N_REPLACING_MODE << endl;
 
 	clock_t start0 = time(NULL);
