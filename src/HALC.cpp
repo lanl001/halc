@@ -2179,7 +2179,7 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			if (ispositive)
 			{
 #pragma omp critical
-				cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2179 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
+				//cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2179 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2188,7 +2188,7 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			else
 			{
 #pragma omp critical
-				cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2187 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
+				//cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2187 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2274,7 +2274,7 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 			if (ispositive)
 			{
 #pragma omp critical
-				cerr << omp_get_thread_num() <<"nfroutebysimilarity:2272 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
+				//cerr << omp_get_thread_num() <<"nfroutebysimilarity:2272 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2283,7 +2283,7 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 			else
 			{
 #pragma omp critical
-				cerr << omp_get_thread_num() << "nfroutebysimilarity:2280 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
+				//cerr << omp_get_thread_num() << "nfroutebysimilarity:2280 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2473,7 +2473,7 @@ bool Ccorrector::findBestNRoute(int n)
 	ofstream correctedfile((outputpath + '/' + prefix + ".corrected.fa").c_str(), ios::trunc);
 	if (!correctedfile.is_open())
 	{
-		cerr << "file to create corrected file" << endl;
+		cerr << "fail to create corrected file" << endl;
 		exit(-1);
 	}
 
@@ -2483,7 +2483,7 @@ bool Ccorrector::findBestNRoute(int n)
 		repeatfile.open((outputpath + '/' + prefix + ".repeatused.fa").c_str(), ios::trunc);
 		if (!repeatfile.is_open())
 		{
-			cerr << "file to create repeat file" << endl;
+			cerr << "fail to create repeat file" << endl;
 			exit(-1);
 		}
 	}
@@ -3154,7 +3154,7 @@ int main(int argc, char *argv[])
 		cerr << "threads = " << numofthread << endl;
 	cerr << "out = " << outputpath << endl;
 	cerr << "prefix = " << prefix << endl;
-	cerr << "repeatfree = true" << endl;
+	cerr << "repeatfree = "<< repeatfree ? "true" : "false" << endl;
 //	cerr << "N_REPLACING_MODE = " << N_REPLACING_MODE << endl;
 
 	clock_t start0 = time(NULL);
