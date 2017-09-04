@@ -2280,7 +2280,7 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 #pragma omp critical
 				cerr << omp_get_thread_num() << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				static int counter = 0;
-				if(++counter%10 == 0)
+				if(++counter%1000 == 0)
 					system((">" + outputpath + "/temp.err").c_str());
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
