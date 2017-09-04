@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <cmath>
+#include <exception>
 
 #define DISPLAY_NUM 65535
 #define BASE_PER_LINE 70
@@ -2271,10 +2272,13 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 				temp = 2;
 				ispositive = false;
 			}
+			else{
+				cerr << "Unexpected condition:2276 jindexofsubcontig = "<<jindexofsubcontig << " iindexofsubcontig = " << iindexofsubcontig << " jstrand = " << jstrand << " istrand = " << istrand << endl;
+			}
 			if (ispositive)
 			{
 #pragma omp critical
-				//cerr << omp_get_thread_num() <<"nfroutebysimilarity:2272 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
+				cerr << omp_get_thread_num() << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -3106,6 +3110,7 @@ void CUndigraph::replaceN()
 
 int main(int argc, char *argv[])
 {
+	try{
 	std::ios::sync_with_stdio(false);
 	omp_init_lock(&mylock);
 	logfilename = "log.txt";
@@ -3155,7 +3160,6 @@ int main(int argc, char *argv[])
 	cerr << "out = " << outputpath << endl;
 	cerr << "prefix = " << prefix << endl;
 	cerr << "repeatfree = "<< (repeatfree ? "true" : "false") << endl;
-//	cerr << "N_REPLACING_MODE = " << N_REPLACING_MODE << endl;
 
 	clock_t start0 = time(NULL);
 	clock_t start = start0;
@@ -3236,6 +3240,8 @@ int main(int argc, char *argv[])
 	end = time(NULL);
 	cerr << "Total running time: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
 	start = end;
-//	cerr << "max_support = " << max_support << endl;
 	return 0;
+	}catch(exception &e){
+		std::cerr << "exception caught: " << e.what() << '\n';
+	}
 }
