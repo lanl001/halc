@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <cmath>
+#include <exception>
 
 #define DISPLAY_NUM 65535
 #define BASE_PER_LINE 70
@@ -2178,7 +2179,7 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			}
 			if (ispositive)
 			{
-#pragma omp critical
+//#pragma omp critical
 				//cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2179 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
@@ -2187,7 +2188,7 @@ void Ccorrector::bestnrouteofsimilarity(int index, int n, int *path, std::vector
 			}
 			else
 			{
-#pragma omp critical
+//#pragma omp critical
 				//cerr <<omp_get_thread_num()<< "bestnrouteofsimilarity:2187 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
@@ -2271,10 +2272,16 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 				temp = 2;
 				ispositive = false;
 			}
+			else{
+				cerr << "Unexpected condition:2276 jindexofsubcontig = "<<jindexofsubcontig << " iindexofsubcontig = " << iindexofsubcontig << " jstrand = " << jstrand << " istrand = " << istrand << endl;
+			}
 			if (ispositive)
 			{
-#pragma omp critical
-				//cerr << omp_get_thread_num() <<"nfroutebysimilarity:2272 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
+//#pragma omp critical
+//				cerr << omp_get_thread_num() << "temp=" << temp << "i ="<< i << "j=" << j << endl;
+				static int counter = 0;
+				if(++counter%10000 == 0)
+					system((">" + outputpath + "/temp.err").c_str());
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
@@ -2282,7 +2289,7 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 			}
 			else
 			{
-#pragma omp critical
+//#pragma omp critical
 				//cerr << omp_get_thread_num() << "nfroutebysimilarity:2280 index=" << index << "temp=" << temp << "i ="<< i << "j=" << j << endl;
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(i, j)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
@@ -3106,6 +3113,7 @@ void CUndigraph::replaceN()
 
 int main(int argc, char *argv[])
 {
+	try{
 	std::ios::sync_with_stdio(false);
 	omp_init_lock(&mylock);
 	logfilename = "log.txt";
@@ -3132,9 +3140,18 @@ int main(int argc, char *argv[])
 	alignfile.open(argv[1]);
 	contigfile.open(argv[2]);
 	longreadfile.open(argv[3]);
-	if (!alignfile.is_open() || !contigfile.is_open() || !longreadfile.is_open())
+	if (!alignfile.is_open() ||  !contigfile.is_open() || !longreadfile.is_open())
 	{
-		cerr << "File dose not exist!" << endl;
+		if(!alignfile.is_open()){
+			cerr << "align";
+		}
+		if(!contigfile.is_open()){
+			cerr << " contig";
+		}
+		if(!longreadfile.is_open()){
+			cerr << " longread";
+		}
+		cerr << "file dose not exist!" << endl;
 		alignfile.close();
 		contigfile.close();
 		longreadfile.close();
@@ -3155,7 +3172,6 @@ int main(int argc, char *argv[])
 	cerr << "out = " << outputpath << endl;
 	cerr << "prefix = " << prefix << endl;
 	cerr << "repeatfree = "<< (repeatfree ? "true" : "false") << endl;
-//	cerr << "N_REPLACING_MODE = " << N_REPLACING_MODE << endl;
 
 	clock_t start0 = time(NULL);
 	clock_t start = start0;
@@ -3224,6 +3240,9 @@ int main(int argc, char *argv[])
 	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
+	if(CUndigraph::subundigraphs.size() > 14852)
+		cout << CUndigraph::subundigraphs[14852].longreadname <<endl;
+
 	cerr << "Correcting long reads..." << endl;
 	Ccorrector corrector(argv[3], argv[2]);
 //	corrector.findBestRouteBySupport();
@@ -3236,6 +3255,8 @@ int main(int argc, char *argv[])
 	end = time(NULL);
 	cerr << "Total running time: " << (end - start0) / 3600 << "h " << (end - start0) % 3600 / 60 << "min " << (end - start0) % 3600 % 60 << "s" << endl << endl;
 	start = end;
-//	cerr << "max_support = " << max_support << endl;
 	return 0;
+	}catch(exception &e){
+		std::cerr << "exception caught: " << e.what() << '\n';
+	}
 }
