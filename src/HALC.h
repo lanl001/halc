@@ -107,11 +107,11 @@ namespace __gnu_cxx
 {
 struct map_hash
 {
-	size_t operator()(const std::pair<long, long>& m) const;
+	size_t operator()(const std::pair<unsigned long, unsigned long>& m) const;
 };
 struct map_equal
 {
-	bool operator()(const std::pair<long, long>& m1, const std::pair<long, long>& m2) const;
+	bool operator()(const std::pair<unsigned long, unsigned long>& m1, const std::pair<unsigned long, unsigned long>& m2) const;
 };
 }
 

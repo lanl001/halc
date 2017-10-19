@@ -55,11 +55,11 @@ bool repeatfree;
 
 namespace __gnu_cxx
 {
-size_t map_hash::operator()(const pair<long, long>& m) const
+size_t map_hash::operator()(const pair<unsigned long, unsigned long>& m) const
 {
-	return hash<int>()(m.first<<16^m.second);
+	return hash<unsigned long>()(m.first^m.second);
 }
-bool map_equal::operator()(const pair<long, long>& m1, const pair<long, long>& m2) const
+bool map_equal::operator()(const pair<unsigned long, unsigned long>& m1, const pair<unsigned long, unsigned long>& m2) const
 {
 	if (m1.first == m2.first && m1.second == m2.second)
 		return true;
@@ -2279,9 +2279,9 @@ void Ccorrector::nfroutebysimilarity(int index, int* counter, int j, int pathpos
 			{
 //#pragma omp critical
 //				cerr << omp_get_thread_num() << "temp=" << temp << "i ="<< i << "j=" << j << endl;
-				static int counter = 0;
-				if(++counter%10000 == 0)
-					system((">" + outputpath + "/temp.err").c_str());
+//				static int counter = 0;
+//				if(++counter%10000 == 0)
+//					system((">" + outputpath + "/temp.err").c_str());
 				if (undigraph.subundigraphs[index].edges[temp].find(make_pair(j, i)) != undigraph.subundigraphs[index].edges[temp].end())
 					c = true;
 				else
