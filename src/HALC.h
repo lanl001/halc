@@ -105,11 +105,11 @@ inline bool ComName(Ccutpoint first, Ccutpoint second)
 
 namespace __gnu_cxx
 {
-struct map_hash
+struct pair_hash
 {
 	size_t operator()(const std::pair<unsigned long, unsigned long>& m) const;
 };
-struct map_equal
+struct pair_equal
 {
 	bool operator()(const std::pair<unsigned long, unsigned long>& m1, const std::pair<unsigned long, unsigned long>& m2) const;
 };
@@ -176,7 +176,7 @@ public:
 	std::string longreadname;
 	std::vector<CSubcontigEx> Subconitglist; //all subcontigs of a longread
 	friend class CUndigraph;
-	std::unordered_map<std::pair<unsigned long, unsigned long>, bool, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal> edges[3];
+	std::unordered_map<std::pair<unsigned long, unsigned long>, bool, __gnu_cxx ::pair_hash, __gnu_cxx ::pair_equal> edges[3];
 private:
 	int ctoffset;
 	int lroffset;
@@ -210,7 +210,7 @@ public:
 class CUndigraph
 {
 public:
-	static std::unordered_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal> graph[3];
+	static std::unordered_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::pair_hash, __gnu_cxx ::pair_equal> graph[3];
 	static void
 	MakeUndigraph(std::ifstream& alignfile);
 	static std::vector<CSubUndigraph> subundigraphs;

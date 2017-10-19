@@ -55,11 +55,11 @@ bool repeatfree;
 
 namespace __gnu_cxx
 {
-size_t map_hash::operator()(const pair<unsigned long, unsigned long>& m) const
+size_t pair_hash::operator()(const pair<unsigned long, unsigned long>& m) const
 {
 	return hash<unsigned long>()(m.first^m.second);
 }
-bool map_equal::operator()(const pair<unsigned long, unsigned long>& m1, const pair<unsigned long, unsigned long>& m2) const
+bool pair_equal::operator()(const pair<unsigned long, unsigned long>& m1, const pair<unsigned long, unsigned long>& m2) const
 {
 	if (m1.first == m2.first && m1.second == m2.second)
 		return true;
@@ -1285,7 +1285,7 @@ bool CSubUndigraph::getEdges()
 }
 
 //CUndigraph undigraph;
-unordered_map<pair<unsigned long, unsigned long>, unsigned short, map_hash, map_equal> CUndigraph::graph[3];
+unordered_map<pair<unsigned long, unsigned long>, unsigned short, pair_hash, pair_equal> CUndigraph::graph[3];
 vector<CSubUndigraph> CUndigraph::subundigraphs;
 vector<vector<CSubcontig> > CSubUndigraph::contiglist;
 vector<Nnodeforsort> CUndigraph::Nnodes;
@@ -3001,7 +3001,7 @@ void CUndigraph::findanveragesupport()
 {
 	double sum = 0;
 	long counter = 0;
-	unordered_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::map_hash, __gnu_cxx ::map_equal>::iterator it;
+	unordered_map<std::pair<unsigned long, unsigned long>, unsigned short, __gnu_cxx ::pair_hash, __gnu_cxx ::pair_equal>::iterator it;
 	for(int i = 0 ; i < 3 ; i++)
 	{
 		for(it = graph[i].begin() ; it != graph[i].end() ; it++)
