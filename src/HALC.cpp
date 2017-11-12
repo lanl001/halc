@@ -3240,8 +3240,8 @@ int main(int argc, char *argv[])
 	cerr << "Running time: " << (end - start) / 3600 << "h " << (end - start) % 3600 / 60 << "min " << (end - start) % 3600 % 60 << "s" << endl << endl;
 	start = end;
 
-	if(CUndigraph::subundigraphs.size() > 14852)
-		cout << CUndigraph::subundigraphs[14852].longreadname <<endl;
+//	if(CUndigraph::subundigraphs.size() > 14852)
+//		cout << CUndigraph::subundigraphs[14852].longreadname <<endl;
 
 	cerr << "Correcting long reads..." << endl;
 	Ccorrector corrector(argv[3], argv[2]);
